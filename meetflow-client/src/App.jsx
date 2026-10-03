@@ -6,6 +6,9 @@ import AudioAnalyzer from './components/AudioAnalyzer';
 import ManualMeetingForm from './components/ManualMeetingForm';
 import MeetingList from './components/MeetingList';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5036';
+const AI_BASE_URL = import.meta.env.VITE_AI_URL || 'http://localhost:8000';
+
 function App() {
   const [meetings, setMeetings] = useState([])
   const [title, setTitle] = useState("")
@@ -29,14 +32,14 @@ function App() {
   const [analyzedText, setAnalyzedText] = useState("");
 
   const fetchMeetings = () => {
-    fetch('http://localhost:5036/api/meetings')
+    fetch(`${API_BASE_URL}/api/meetings`)
       .then(res => res.json())
       .then(data => setMeetings(data))
       .catch(err => console.error(err))
   }
 
   const fetchUsers = () => {
-    fetch('http://localhost:5036/api/users')
+    fetch(`${API_BASE_URL}/api/users`)
       .then(res => res.json())
       .then(data => setUsers(data))
       .catch(err => console.error(err))
@@ -103,7 +106,7 @@ function App() {
     e.preventDefault(); 
     const newMeeting = { title, date };
 
-    fetch('http://localhost:5036/api/meetings', {
+    fetch(`${API_BASE_URL}/api/meetings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newMeeting)
@@ -132,7 +135,7 @@ function App() {
     const formData = new FormData();
     formData.append("file", audioFile);
 
-    fetch('http://localhost:8000/analyze-audio', {
+    fetch(`${AI_BASE_URL}/analyze-audio`, {
       method: 'POST',
       body: formData,
     })
@@ -149,7 +152,7 @@ function App() {
             date: new Date().toISOString().slice(0, 16) 
           };
           
-          const meetingRes = await fetch('http://localhost:5036/api/meetings', {
+          const meetingRes = await fetch(`${API_BASE_URL}/api/meetings`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newMeeting)
@@ -165,7 +168,7 @@ function App() {
               assignedUserId: null 
             };
             
-            await fetch('http://localhost:5036/api/tasks', {
+            await fetch(`${API_BASE_URL}/api/tasks`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(newTask)
@@ -228,7 +231,7 @@ function App() {
   };
 
   const executeDeleteMeeting = (meetingId) => {
-    fetch(`http://localhost:5036/api/meetings/${meetingId}`, {
+    fetch(`${API_BASE_URL}/api/meetings/${meetingId}`, {
       method: 'DELETE'
     })
     .then(res => {
@@ -255,7 +258,7 @@ function App() {
       assignedUserId: selectedUserId 
     };
 
-    fetch('http://localhost:5036/api/tasks', {
+    fetch(`${API_BASE_URL}/api/tasks`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newTask)
@@ -273,7 +276,7 @@ function App() {
   }
 
   const handleDeleteTask = (taskId) => {
-    fetch(`http://localhost:5036/api/tasks/${taskId}`, {
+    fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
       method: 'DELETE'
     })
     .then(res => {
@@ -293,7 +296,7 @@ function App() {
       status: updatedStatus
     };
 
-    fetch(`http://localhost:5036/api/tasks/${task.id}`, {
+    fetch(`${API_BASE_URL}/api/tasks/${task.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updatedTask)
@@ -319,7 +322,7 @@ function App() {
       title: `${priority} | ${editingTaskTitle}`
     };
 
-    fetch(`http://localhost:5036/api/tasks/${task.id}`, {
+    fetch(`${API_BASE_URL}/api/tasks/${task.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updatedTask)
