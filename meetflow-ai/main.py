@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 import aiofiles
 import json
+import time
 from google import genai
 
 app = FastAPI()
@@ -31,9 +32,13 @@ async def analyze_audio(file: UploadFile = File(...)):
         await out_file.write(content)
         
     try:
-        print(f"'{temp_file_path}' dosyası doğrudan Gemini'ye yükleniyor...")
-        
+        print(f"'{temp_file_path}' dosyası Gemini'ye yükleniyor...")
         audio_file = client.files.upload(file=temp_file_path)
+        
+        print("Gemini dosyanın işlenmesini bekliyor...")
+        while audio_file.state.name == "PROCESSING":
+            time.sleep(2)
+            audio_file = client.files.get(name=audio_file.name)
         
         prompt = """
         Bu toplantı ses/video kaydını dinle. Bana aşağıdaki JSON formatında, eksiksiz bir yanıt dön. Başka hiçbir açıklama yazma:
@@ -50,14 +55,14 @@ async def analyze_audio(file: UploadFile = File(...)):
             model='gemini-1.5-flash', 
             contents=[audio_file, prompt]
         )
-
+        
         result_text = response.text.replace("```json", "").replace("```", "").strip()
         result_data = json.loads(result_text)
         
         transcript = result_data.get("tam_metin", "Metin çıkarılamadı.")
         extracted_tasks = json.dumps(result_data.get("gorevler", []))
         
-        print("Gemini hem metni hem de görevleri başarıyla çıkardı!")
+        print("Gemini başarıyla çalıştı!")
         
     except Exception as e:
         print(f"Hata: {e}")
@@ -69,7 +74,7 @@ async def analyze_audio(file: UploadFile = File(...)):
             os.remove(temp_file_path)
             
     return {
-        "mesaj": f"Harika! '{file.filename}' başarıyla analize tabi tutuldu.",
+        "mesaj": f"'{file.filename}' başarıyla analize tabi tutuldu.",
         "tam_metin": transcript,
         "gorevler": extracted_tasks
     }

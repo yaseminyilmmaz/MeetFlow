@@ -371,6 +371,8 @@ function App() {
           }
           * {
             box-sizing: border-box;
+            word-wrap: break-word;
+            overflow-wrap: anywhere;
           }
           :root {
             --bg-body: #f4f5f7;
