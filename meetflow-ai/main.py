@@ -1,8 +1,8 @@
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-import whisper
 import os
 import aiofiles
+import json
 from google import genai
 
 app = FastAPI()
@@ -18,10 +18,6 @@ app.add_middleware(
 gemini_api_key = os.getenv("GEMINI_API_KEY")
 client = genai.Client(api_key=gemini_api_key)
 
-print("Yapay Zeka Modeli (Whisper) yükleniyor, lütfen bekleyin...")
-model = whisper.load_model("tiny")
-print("Model başarıyla yüklendi!")
-
 @app.get("/")
 def read_root():
     return {"mesaj": "MeetFlow AI Mikroservisi başarıyla çalışıyor!"}
@@ -35,35 +31,38 @@ async def analyze_audio(file: UploadFile = File(...)):
         await out_file.write(content)
         
     try:
-        print(f"'{temp_file_path}' dosyası Whisper tarafından analiz ediliyor...")
-        result = model.transcribe(temp_file_path)
-        transcript = result["text"]
+        print(f"'{temp_file_path}' dosyası doğrudan Gemini'ye yükleniyor...")
         
-        print("Metin elde edildi. Şimdi Gemini ile görevler (task) çıkarılıyor...")
+        audio_file = client.files.upload(file=temp_file_path)
         
-        prompt = f"""
-        Aşağıdaki toplantı dökümünü analiz et. Sadece net bir şekilde yapılması gereken görevleri (task) çıkar.
-        Görevleri Acil, Orta veya Düşük önceliklerine göre sınıflandır.
-        Bana sadece şu JSON formatında bir çıktı ver, ekstra hiçbir açıklama yazma:
-        [
-          {{"title": "Acil | Müşteri veritabanını güncelle"}},
-          {{"title": "Orta | Yeni logo tasarımını onaya gönder"}}
-        ]
-        
-        Toplantı Metni: {transcript}
+        prompt = """
+        Bu toplantı ses/video kaydını dinle. Bana aşağıdaki JSON formatında, eksiksiz bir yanıt dön. Başka hiçbir açıklama yazma:
+        {
+          "tam_metin": "Buraya toplantıda konuşulanların tamamını metin olarak yaz",
+          "gorevler": [
+            {"title": "Acil | Müşteri veritabanını güncelle"},
+            {"title": "Orta | Yeni logo tasarımını onaya gönder"}
+          ]
+        }
         """
         
-        try:
-            response = client.models.generate_content(
-                model='gemini-3.8-flash', 
-                contents=prompt,
-            )
-            extracted_tasks = response.text
-            print("Gemini görevleri başarıyla çıkardı!")
-            
-        except Exception as e:
-            print(f"DİKKAT: Gemini API yanıt vermedi. Hata: {e}")
-            extracted_tasks = "[\n  {\"title\": \"Sistem Uyarısı | Google Yapay Zeka sunucuları şu an aşırı yoğun. Görev çıkarımı yapılamadı, ancak metin dökümü başarıyla alındı. Lütfen birkaç dakika sonra tekrar deneyin.\"}\n]"
+        response = client.models.generate_content(
+            model='gemini-1.5-flash', 
+            contents=[audio_file, prompt]
+        )
+
+        result_text = response.text.replace("```json", "").replace("```", "").strip()
+        result_data = json.loads(result_text)
+        
+        transcript = result_data.get("tam_metin", "Metin çıkarılamadı.")
+        extracted_tasks = json.dumps(result_data.get("gorevler", []))
+        
+        print("Gemini hem metni hem de görevleri başarıyla çıkardı!")
+        
+    except Exception as e:
+        print(f"Hata: {e}")
+        transcript = "Ses analiz edilemedi."
+        extracted_tasks = "[\n  {\"title\": \"Sistem Uyarısı | İşlem başarısız.\"}\n]"
         
     finally:
         if os.path.exists(temp_file_path):
