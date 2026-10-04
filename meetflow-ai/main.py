@@ -41,6 +41,9 @@ async def analyze_audio(file: UploadFile = File(...)):
         while audio_file.state.name == "PROCESSING":
             time.sleep(2)
             audio_file = client.files.get(name=audio_file.name)
+            
+        if audio_file.state.name == "FAILED":
+            raise Exception("Gemini dosyayi isleyemedi (FAILED durumu).")
         
         prompt = """
         Bu toplantı ses/video kaydını dinle. Bana aşağıdaki JSON formatında, eksiksiz bir yanıt dön. Başka hiçbir açıklama yazma:
@@ -52,9 +55,9 @@ async def analyze_audio(file: UploadFile = File(...)):
           ]
         }
         """
-        
+
         response = client.models.generate_content(
-            model='gemini-1.5-flash', 
+            model='gemini-1.5-pro', 
             contents=[audio_file, prompt]
         )
         
