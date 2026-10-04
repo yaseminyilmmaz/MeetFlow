@@ -7,7 +7,7 @@ import ManualMeetingForm from './components/ManualMeetingForm';
 import MeetingList from './components/MeetingList';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5036';
-const AI_BASE_URL = import.meta.env.VITE_AI_URL || 'http://localhost:8000';
+const AI_BASE_URL = import.meta.env.VITE_AI_URL || 'https://meetflow-1-gehu.onrender.com';
 
 function App() {
   const [meetings, setMeetings] = useState([])
