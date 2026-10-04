@@ -15,7 +15,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-client = genai.Client(api_key="API_KEY_BURAYA_GELECEK")
+gemini_api_key = os.getenv("GEMINI_API_KEY")
+client = genai.Client(api_key=gemini_api_key)
 
 print("Yapay Zeka Modeli (Whisper) yükleniyor, lütfen bekleyin...")
 model = whisper.load_model("base")

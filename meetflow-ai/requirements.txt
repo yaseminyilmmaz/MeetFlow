@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+openai-whisper
+aiofiles
+google-genai
+python-multipart
