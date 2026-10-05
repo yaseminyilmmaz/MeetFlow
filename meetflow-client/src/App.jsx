@@ -552,7 +552,7 @@ function App() {
             isAnalyzing={isAnalyzing} 
           />
 
-          <div style={{ flex: '1', minWidth: '300px', backgroundColor: 'var(--bg-card)', padding: '24px', borderRadius: '12px', border: '1px solid var(--border-light)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+          <div style={{ flex: '1', minWidth: '300px', backgroundColor: 'var(--bg-card)', padding: '24px', borderRadius: '12px', border: '1px solid var(--border-light)', borderTop: '4px solid #36b37e', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
             <h3 style={{ marginTop: 0, color: 'var(--text-title)', fontSize: '1.2em', marginBottom: '15px' }}>
               Yeni Kullanıcı Ekle
             </h3>
