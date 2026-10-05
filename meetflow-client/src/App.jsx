@@ -17,8 +17,7 @@ function App() {
   const [taskUsers, setTaskUsers] = useState({})
   const [taskPriorities, setTaskPriorities] = useState({})
   const [users, setUsers] = useState([])
-  
-  // Yeni Kullanıcı Ekleme Formu Stateleri
+
   const [newUserName, setNewUserName] = useState("")
   const [newUserEmail, setNewUserEmail] = useState("")
   const [newUserDept, setNewUserDept] = useState("")
@@ -126,7 +125,6 @@ function App() {
     .catch(err => console.error(err));
   }
   
-  // YENİ KULLANICI EKLEME İŞLEMİ
   const handleUserSubmit = (e) => {
     e.preventDefault();
     const newUser = { fullName: newUserName, email: newUserEmail, department: newUserDept };
@@ -537,7 +535,6 @@ function App() {
           pendingTasks={pendingTasks} 
         />
         
-        {/* ÜST PANEL: TOPLANTI EKLE, SES YÜKLE VE YENİ KULLANICI EKLE FORMLARI */}
         <div className="hide-item show-item" style={{ display: 'flex', gap: '30px', flexWrap: 'wrap', width: '100%', marginBottom: '50px' }}>
           
           <ManualMeetingForm 
@@ -555,10 +552,9 @@ function App() {
             isAnalyzing={isAnalyzing} 
           />
 
-          {/* YENİ EKLENEN KULLANICI EKLEME KARTI */}
           <div style={{ flex: '1', minWidth: '300px', backgroundColor: 'var(--bg-card)', padding: '24px', borderRadius: '12px', border: '1px solid var(--border-light)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
             <h3 style={{ marginTop: 0, color: 'var(--text-title)', fontSize: '1.2em', marginBottom: '15px' }}>
-              👤 Yeni Kullanıcı Ekle
+              Yeni Kullanıcı Ekle
             </h3>
             <form onSubmit={handleUserSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <input

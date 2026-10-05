@@ -57,7 +57,7 @@ async def analyze_audio(file: UploadFile = File(...)):
         """
 
         response = client.models.generate_content(
-            model='gemini-1.5-flash', 
+            model='gemini-3.8-flash', 
             contents=[audio_file, prompt]
         )
         
