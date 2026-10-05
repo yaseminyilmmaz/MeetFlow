@@ -34,23 +34,6 @@ async def analyze_audio(file: UploadFile = File(...)):
         await out_file.write(content)
         
     try:
-        available_models = [m.name for m in client.models.list()]
-        
-        target_model = None
-        for model_name in available_models:
-            if "gemini-1.5-flash" in model_name:
-                target_model = model_name
-                break
-        
-        if not target_model:
-            for model_name in available_models:
-                if "gemini" in model_name and ("flash" in model_name or "pro" in model_name):
-                    target_model = model_name
-                    break
-
-        if not target_model:
-            target_model = "gemini-1.5-flash"
-
         audio_file = client.files.upload(file=temp_file_path)
         
         while audio_file.state.name == "PROCESSING":
@@ -72,9 +55,9 @@ async def analyze_audio(file: UploadFile = File(...)):
           ]
         }
         """
-        
+
         response = client.models.generate_content(
-            model=target_model, 
+            model='gemini-3.8-flash', 
             contents=[audio_file, prompt]
         )
         
@@ -86,18 +69,12 @@ async def analyze_audio(file: UploadFile = File(...)):
             transcript = result_data.get("tam_metin", raw_text)
             extracted_tasks = json.dumps(result_data.get("gorevler", []))
         except Exception:
-            transcript = f"Yapay zeka yanıt verdi ancak JSON bozuk:\n\n{raw_text}"
-            extracted_tasks = json.dumps([{"title": "Orta | Görevler ayrıştırılamadı"}])
+            transcript = f"Metin başarıyla çıkarıldı ancak JSON ayrıştırılamadı:\n\n{raw_text}"
+            extracted_tasks = json.dumps([{"title": "Sistem | Metin alındı, görevler ayrıştırılamadı."}])
             
     except Exception as e:
-        try:
-            models = [m.name for m in client.models.list()]
-            model_str = "\n".join(models)
-        except Exception:
-            model_str = "Model listesi alınamadı."
-            
-        transcript = f"SİSTEM HATASI: {str(e)}\n\n(HATA AYIKLAMA) API ANAHTARINIZIN DESTEKLEDİĞİ MODELLER:\n{model_str}"
-        extracted_tasks = json.dumps([{"title": "Sistem | Hata oluştu"}])
+        transcript = f"SİSTEM HATASI: {str(e)}"
+        extracted_tasks = json.dumps([{"title": "Hata | İşlem Başarısız"}])
         
     finally:
         if os.path.exists(temp_file_path):
