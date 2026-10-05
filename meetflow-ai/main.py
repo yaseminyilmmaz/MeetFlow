@@ -3,8 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 import aiofiles
 import json
-import time
 import uuid
+import asyncio  
 from google import genai
 from google.genai import types
 
@@ -38,7 +38,8 @@ async def analyze_audio(file: UploadFile = File(...)):
         audio_file = client.files.upload(file=temp_file_path)
         
         while audio_file.state.name == "PROCESSING":
-            time.sleep(2)
+            # Sunucuyu kilitleyen time.sleep yerine asenkron bekleme
+            await asyncio.sleep(2)
             audio_file = client.files.get(name=audio_file.name)
             
         if audio_file.state.name == "FAILED":
@@ -63,11 +64,24 @@ async def analyze_audio(file: UploadFile = File(...)):
             response_mime_type="application/json",
         )
 
-        response = client.models.generate_content(
-            model=aktif_model, 
-            contents=[audio_file, prompt],
-            config=config
-        )
+        max_deneme = 3
+        response = None
+        
+        for deneme in range(max_deneme):
+            try:
+                response = client.models.generate_content(
+                    model=aktif_model, 
+                    contents=[audio_file, prompt],
+                    config=config
+                )
+                break 
+            except Exception as e:
+                hata_mesaji = str(e)
+                if "503" in hata_mesaji and deneme < max_deneme - 1:
+                    await asyncio.sleep(3)  
+                    continue
+                else:
+                    raise Exception(f"Google API Hatası: {hata_mesaji}")
         
         raw_text = response.text
         
