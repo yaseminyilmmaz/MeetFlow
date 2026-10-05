@@ -6,6 +6,7 @@ import json
 import time
 import uuid
 from google import genai
+from google.genai import types
 
 app = FastAPI()
 
@@ -56,21 +57,33 @@ async def analyze_audio(file: UploadFile = File(...)):
         }
         """
 
+        aktif_model = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+        
+        config = types.GenerateContentConfig(
+            response_mime_type="application/json",
+        )
+
         response = client.models.generate_content(
-            model='gemini-2.0-flash', 
-            contents=[audio_file, prompt]
+            model=aktif_model, 
+            contents=[audio_file, prompt],
+            config=config
         )
         
         raw_text = response.text
         
         try:
-            clean_text = raw_text.replace("```json", "").replace("```", "").strip()
-            result_data = json.loads(clean_text)
-            transcript = result_data.get("tam_metin", raw_text)
+            result_data = json.loads(raw_text)
+            transcript = result_data.get("tam_metin", "Metin bulunamadı.")
             extracted_tasks = json.dumps(result_data.get("gorevler", []))
         except Exception:
-            transcript = f"Metin başarıyla çıkarıldı ancak JSON ayrıştırılamadı:\n\n{raw_text}"
-            extracted_tasks = json.dumps([{"title": "Sistem | Metin alındı, görevler ayrıştırılamadı."}])
+            clean_text = raw_text.replace("```json", "").replace("```", "").strip()
+            try:
+                result_data = json.loads(clean_text)
+                transcript = result_data.get("tam_metin", "Metin bulunamadı.")
+                extracted_tasks = json.dumps(result_data.get("gorevler", []))
+            except Exception:
+                transcript = f"Metin başarıyla çıkarıldı ancak JSON ayrıştırılamadı:\n\n{raw_text}"
+                extracted_tasks = json.dumps([{"title": "Sistem | Metin alındı, görevler ayrıştırılamadı."}])
             
     except Exception as e:
         transcript = f"SİSTEM HATASI: {str(e)}"
