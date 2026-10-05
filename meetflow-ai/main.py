@@ -34,52 +34,54 @@ async def analyze_audio(file: UploadFile = File(...)):
         await out_file.write(content)
         
     try:
-        print(f"Dosya Gemini'ye yukleniyor: {temp_file_path}")
         audio_file = client.files.upload(file=temp_file_path)
         
-        print("Gemini dosyanin islenmesini bekliyor...")
         while audio_file.state.name == "PROCESSING":
             time.sleep(2)
             audio_file = client.files.get(name=audio_file.name)
             
         if audio_file.state.name == "FAILED":
-            raise Exception("Gemini dosyayi isleyemedi (FAILED durumu).")
+            raise Exception("Google Gemini dosyayi isleyemedi.")
         
         prompt = """
-        Bu toplantı ses/video kaydını dinle. Bana aşağıdaki JSON formatında, eksiksiz bir yanıt dön. Başka hiçbir açıklama yazma:
+        Bu toplantı ses/video kaydını dinle.
+        SADECE GEÇERLİ BİR JSON ÇIKTISI VER. BAŞKA HİÇBİR YORUM YAZMA.
+        Format:
         {
-          "tam_metin": "Buraya toplantıda konuşulanların tamamını metin olarak yaz",
+          "tam_metin": "konuşma metni buraya",
           "gorevler": [
-            {"title": "Acil | Müşteri veritabanını güncelle"},
-            {"title": "Orta | Yeni logo tasarımını onaya gönder"}
+            {"title": "Acil | Görev 1"},
+            {"title": "Orta | Görev 2"}
           ]
         }
         """
         
         response = client.models.generate_content(
-            model='gemini-1.5-flash', 
+            model='gemini-2.0-flash', 
             contents=[audio_file, prompt]
         )
         
-        result_text = response.text.replace("```json", "").replace("```", "").strip()
-        result_data = json.loads(result_text)
+        raw_text = response.text
         
-        transcript = result_data.get("tam_metin", "Metin çıkarılamadı.")
-        extracted_tasks = json.dumps(result_data.get("gorevler", []))
-        
-        print("Gemini basariyla calisti!")
-        
+        try:
+            clean_text = raw_text.replace("```json", "").replace("```", "").strip()
+            result_data = json.loads(clean_text)
+            transcript = result_data.get("tam_metin", raw_text)
+            extracted_tasks = json.dumps(result_data.get("gorevler", []))
+        except Exception:
+            transcript = f"Metin Çıkarıldı:\n\n{raw_text}"
+            extracted_tasks = json.dumps([{"title": "Orta | Görevler ayrıştırılamadı"}])
+            
     except Exception as e:
-        print(f"Hata olustu: {e}")
-        transcript = "Ses analiz edilemedi."
-        extracted_tasks = "[\n  {\"title\": \"Sistem Uyarısı | İşlem başarısız.\"}\n]"
+        transcript = f"SİSTEM HATASI: {str(e)}"
+        extracted_tasks = json.dumps([{"title": "Sistem | Hata oluştu"}])
         
     finally:
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
             
     return {
-        "mesaj": "Dosya basariyla analiz edildi.",
+        "mesaj": "İşlem tamamlandı.",
         "tam_metin": transcript,
         "gorevler": extracted_tasks
     }
