@@ -18,6 +18,11 @@ function App() {
   const [taskPriorities, setTaskPriorities] = useState({})
   const [users, setUsers] = useState([])
   
+  // Yeni Kullanıcı Ekleme Formu Stateleri
+  const [newUserName, setNewUserName] = useState("")
+  const [newUserEmail, setNewUserEmail] = useState("")
+  const [newUserDept, setNewUserDept] = useState("")
+  
   const [filterUserId, setFilterUserId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -121,6 +126,28 @@ function App() {
     .catch(err => console.error(err));
   }
   
+  // YENİ KULLANICI EKLEME İŞLEMİ
+  const handleUserSubmit = (e) => {
+    e.preventDefault();
+    const newUser = { fullName: newUserName, email: newUserEmail, department: newUserDept };
+
+    fetch(`${API_BASE_URL}/api/users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newUser)
+    })
+    .then(res => {
+      if(res.ok) {
+        fetchUsers(); 
+        setNewUserName("");
+        setNewUserEmail("");
+        setNewUserDept("");
+        toast.success("Kullanıcı başarıyla sisteme eklendi!");
+      }
+    })
+    .catch(err => console.error(err));
+  }
+
   const handleAudioUpload = (e) => {
     e.preventDefault();
     if (!audioFile) {
@@ -510,6 +537,7 @@ function App() {
           pendingTasks={pendingTasks} 
         />
         
+        {/* ÜST PANEL: TOPLANTI EKLE, SES YÜKLE VE YENİ KULLANICI EKLE FORMLARI */}
         <div className="hide-item show-item" style={{ display: 'flex', gap: '30px', flexWrap: 'wrap', width: '100%', marginBottom: '50px' }}>
           
           <ManualMeetingForm 
@@ -526,6 +554,41 @@ function App() {
             setAudioFile={setAudioFile} 
             isAnalyzing={isAnalyzing} 
           />
+
+          {/* YENİ EKLENEN KULLANICI EKLEME KARTI */}
+          <div style={{ flex: '1', minWidth: '300px', backgroundColor: 'var(--bg-card)', padding: '24px', borderRadius: '12px', border: '1px solid var(--border-light)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+            <h3 style={{ marginTop: 0, color: 'var(--text-title)', fontSize: '1.2em', marginBottom: '15px' }}>
+              👤 Yeni Kullanıcı Ekle
+            </h3>
+            <form onSubmit={handleUserSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <input
+                type="text"
+                placeholder="Ad Soyad"
+                value={newUserName}
+                onChange={(e) => setNewUserName(e.target.value)}
+                required
+                style={{ padding: '12px', borderRadius: '6px', border: '1px solid var(--border-light)', backgroundColor: 'var(--bg-input)', color: 'var(--text-normal)', fontSize: '0.95em' }}
+              />
+              <input
+                type="email"
+                placeholder="E-posta"
+                value={newUserEmail}
+                onChange={(e) => setNewUserEmail(e.target.value)}
+                required
+                style={{ padding: '12px', borderRadius: '6px', border: '1px solid var(--border-light)', backgroundColor: 'var(--bg-input)', color: 'var(--text-normal)', fontSize: '0.95em' }}
+              />
+              <input
+                type="text"
+                placeholder="Departman (Örn: Yazılım)"
+                value={newUserDept}
+                onChange={(e) => setNewUserDept(e.target.value)}
+                style={{ padding: '12px', borderRadius: '6px', border: '1px solid var(--border-light)', backgroundColor: 'var(--bg-input)', color: 'var(--text-normal)', fontSize: '0.95em' }}
+              />
+              <button type="submit" style={{ padding: '12px', backgroundColor: '#36b37e', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1em', marginTop: '4px', transition: 'background-color 0.2s' }}>
+                Sisteme Kaydet
+              </button>
+            </form>
+          </div>
 
         </div>
 
