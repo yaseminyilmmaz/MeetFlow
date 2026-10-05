@@ -5,7 +5,7 @@ import aiofiles
 import json
 import time
 import uuid
-import google.generativeai as genai
+from google import genai
 
 app = FastAPI()
 
@@ -18,7 +18,7 @@ app.add_middleware(
 )
 
 gemini_api_key = os.getenv("GEMINI_API_KEY")
-genai.configure(api_key=gemini_api_key)
+client = genai.Client(api_key=gemini_api_key)
 
 @app.get("/")
 def read_root():
@@ -34,11 +34,11 @@ async def analyze_audio(file: UploadFile = File(...)):
         await out_file.write(content)
         
     try:
-        audio_file = genai.upload_file(path=temp_file_path)
+        audio_file = client.files.upload(file=temp_file_path)
         
         while audio_file.state.name == "PROCESSING":
             time.sleep(2)
-            audio_file = genai.get_file(audio_file.name)
+            audio_file = client.files.get(name=audio_file.name)
             
         if audio_file.state.name == "FAILED":
             raise Exception("Google Gemini dosyayı işleyemedi.")
@@ -56,8 +56,10 @@ async def analyze_audio(file: UploadFile = File(...)):
         }
         """
 
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        response = model.generate_content([audio_file, prompt])
+        response = client.models.generate_content(
+            model='gemini-1.5-flash', 
+            contents=[audio_file, prompt]
+        )
         
         raw_text = response.text
         
