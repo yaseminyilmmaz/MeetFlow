@@ -57,7 +57,7 @@ async def analyze_audio(file: UploadFile = File(...)):
         }
         """
 
-        aktif_model = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+        aktif_model = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
         
         config = types.GenerateContentConfig(
             response_mime_type="application/json",
