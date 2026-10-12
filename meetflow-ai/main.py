@@ -34,13 +34,6 @@ async def analyze_audio(file: UploadFile = File(...)):
         content = await file.read()
         await out_file.write(content)
         
-        
-    fallback_metin = "Herkese günaydın, staj projesinin son durumunu değerlendiriyoruz. Veritabanı bağlantı hatasının çözülmesi çok acil, bunu bugün bitirelim. Arayüz tasarımını da yarına kadar orta öncelikli olarak tamamlayalım."
-    fallback_gorevler = [
-        {"title": "Acil | Veritabanı bağlantı hatasını çöz"},
-        {"title": "Orta | Arayüz tasarımını yarına kadar tamamla"}
-    ]
-        
     try:
         audio_file = client.files.upload(file=temp_file_path)
         
@@ -64,7 +57,7 @@ async def analyze_audio(file: UploadFile = File(...)):
         }
         """
 
-        aktif_model = os.getenv("GEMINI_MODEL", "gemini-1.5-flash-latest")
+        aktif_model = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
         
         config = types.GenerateContentConfig(
             response_mime_type="application/json",
@@ -72,7 +65,6 @@ async def analyze_audio(file: UploadFile = File(...)):
 
         max_deneme = 3
         response = None
-        api_basarili = False
         
         for deneme in range(max_deneme):
             try:
@@ -81,7 +73,6 @@ async def analyze_audio(file: UploadFile = File(...)):
                     contents=[audio_file, prompt],
                     config=config
                 )
-                api_basarili = True
                 break 
             except Exception as e:
                 hata_mesaji = str(e)
@@ -89,32 +80,27 @@ async def analyze_audio(file: UploadFile = File(...)):
                     await asyncio.sleep(3)  
                     continue
                 else:
-                    print(f"API Hatası (Fallback Devreye Girdi): {hata_mesaji}")
-                    break
+                    raise Exception(f"Google API Hatası: {hata_mesaji}")
         
-        if api_basarili and response:
-            raw_text = response.text
+        raw_text = response.text
+        
+        try:
+            result_data = json.loads(raw_text)
+            transcript = result_data.get("tam_metin", "Metin bulunamadı.")
+            extracted_tasks = json.dumps(result_data.get("gorevler", []))
+        except Exception:
+            clean_text = raw_text.replace("```json", "").replace("```", "").strip()
             try:
-                result_data = json.loads(raw_text)
+                result_data = json.loads(clean_text)
                 transcript = result_data.get("tam_metin", "Metin bulunamadı.")
                 extracted_tasks = json.dumps(result_data.get("gorevler", []))
             except Exception:
-                clean_text = raw_text.replace("```json", "").replace("```", "").strip()
-                try:
-                    result_data = json.loads(clean_text)
-                    transcript = result_data.get("tam_metin", "Metin bulunamadı.")
-                    extracted_tasks = json.dumps(result_data.get("gorevler", []))
-                except Exception:
-                    transcript = fallback_metin
-                    extracted_tasks = json.dumps(fallback_gorevler)
-        else:
-            transcript = fallback_metin
-            extracted_tasks = json.dumps(fallback_gorevler)
+                transcript = f"Metin başarıyla çıkarıldı ancak JSON ayrıştırılamadı:\n\n{raw_text}"
+                extracted_tasks = json.dumps([{"title": "Sistem | Metin alındı, görevler ayrıştırılamadı."}])
             
     except Exception as e:
-        print(f"Kritik Sistem Hatası (Fallback Devreye Girdi): {str(e)}")
-        transcript = fallback_metin
-        extracted_tasks = json.dumps(fallback_gorevler)
+        transcript = f"SİSTEM HATASI: {str(e)}"
+        extracted_tasks = json.dumps([{"title": "Hata | İşlem Başarısız"}])
         
     finally:
         if os.path.exists(temp_file_path):
