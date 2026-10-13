@@ -2,7 +2,6 @@ export default function MeetingList({
   filteredMeetings, filterUserId, users, isDarkMode, 
   taskPriorities, setTaskPriorities, taskInputs, setTaskInputs, taskUsers, setTaskUsers,
   editingTaskId, setEditingTaskId, editingTaskTitle, setEditingTaskTitle,
-  editingTaskUserId, setEditingTaskUserId, editingTaskPriority, setEditingTaskPriority,
   confirmDeleteMeeting, handleToggleStatus, handleStartEdit, handleSaveEdit, handleDeleteTask, handleAddTask,
   getCountdown, parseTaskPriority, getPriorityStyles, getUserName
 }) {
@@ -81,48 +80,21 @@ export default function MeetingList({
                               />
 
                               {editingTaskId === task.id ? (
-                                <div style={{ display: 'flex', flex: 1, gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                                  
-                                 
-                                  <select 
-                                    value={editingTaskPriority} 
-                                    onChange={(e) => setEditingTaskPriority(e.target.value)}
-                                    style={{ padding: '4px 8px', border: '1px solid #0052cc', borderRadius: '4px', outline: 'none', backgroundColor: 'var(--bg-input)', fontSize: '0.85em', fontWeight: '600', cursor: 'pointer' }}
-                                  >
-                                    <option value="Acil">Acil</option>
-                                    <option value="Orta">Orta</option>
-                                    <option value="Düşük">Düşük</option>
-                                  </select>
-
-                                
+                                <div style={{ display: 'flex', flex: 1, gap: '10px' }}>
                                   <input 
                                     type="text" 
                                     value={editingTaskTitle}
                                     onChange={(e) => setEditingTaskTitle(e.target.value)}
-                                    style={{ padding: '4px 8px', flex: '2 1 150px', border: '1px solid #0052cc', borderRadius: '4px', outline: 'none', backgroundColor: 'var(--bg-input)', fontSize: '0.9em' }}
+                                    style={{ padding: '4px 8px', flex: 1, border: '1px solid #0052cc', borderRadius: '4px', outline: 'none', backgroundColor: 'var(--bg-input)' }}
                                   />
-
-                                  {/* KULLANICI ATAMA DROPDOWN'I */}
-                                  <select 
-                                    value={editingTaskUserId} 
-                                    onChange={(e) => setEditingTaskUserId(e.target.value)}
-                                    style={{ padding: '4px 8px', flex: '1 1 120px', border: '1px solid #0052cc', borderRadius: '4px', outline: 'none', backgroundColor: 'var(--bg-input)', fontSize: '0.85em', fontWeight: '600', cursor: 'pointer' }}
-                                  >
-                                    <option value="">Atama Yap</option>
-                                    {users.map(user => (
-                                      <option key={user.id} value={user.id}>{user.fullName}</option>
-                                    ))}
-                                  </select>
-
-                                
                                   <button 
                                     onClick={() => handleSaveEdit(task)}
-                                    style={{ backgroundColor: '#36b37e', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8em', fontWeight: '600' }}>
+                                    style={{ backgroundColor: '#36b37e', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8em', fontWeight: '600' }}>
                                     Kaydet
                                   </button>
                                   <button 
                                     onClick={() => setEditingTaskId(null)}
-                                    style={{ backgroundColor: '#ebecf0', color: '#42526e', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8em', fontWeight: '600' }}>
+                                    style={{ backgroundColor: '#ebecf0', color: '#42526e', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8em', fontWeight: '600' }}>
                                     İptal
                                   </button>
                                 </div>
