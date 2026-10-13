@@ -2,4 +2,4 @@ fastapi
 uvicorn
 aiofiles
 python-multipart
-google-generativeai
+google-genai

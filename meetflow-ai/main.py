@@ -5,7 +5,10 @@ import aiofiles
 import json
 import uuid
 import asyncio
-import google.generativeai as genai
+import time
+
+from google import genai
+from google.genai import types
 
 app = FastAPI()
 
@@ -18,8 +21,7 @@ app.add_middleware(
 )
 
 gemini_api_key = os.getenv("GEMINI_API_KEY")
-if gemini_api_key:
-    genai.configure(api_key=gemini_api_key)
+client = genai.Client(api_key=gemini_api_key) if gemini_api_key else None
 
 PROMPT = """
 Bu toplantı ses/video kaydını dinle.
@@ -34,12 +36,21 @@ Format:
 }
 """
 
+DENENECEK_MODELLER = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
+
 @app.get("/")
 def read_root():
-    return {"mesaj": "MeetFlow AI Mikroservisi calisiyor (MIME Korumalı)!"}
+    return {"mesaj": "MeetFlow AI Mikroservisi calisiyor (Yeni GenAI Sürümü)!"}
 
 @app.post("/analyze-audio")
 async def analyze_audio(file: UploadFile = File(...)):
+    if not client:
+        return {
+            "mesaj": "İşlem tamamlandı.",
+            "tam_metin": "SİSTEM HATASI: GEMINI_API_KEY bulunamadı.",
+            "gorevler": json.dumps([{"title": "Hata | API Key Eksik"}], ensure_ascii=False)
+        }
+
     ext = os.path.splitext(file.filename)[1]
     temp_file_path = f"temp_{uuid.uuid4().hex}{ext}"
 
@@ -50,53 +61,47 @@ async def analyze_audio(file: UploadFile = File(...)):
     uploaded_file = None
     
     try:
-        mime_type = file.content_type
-        if not mime_type or mime_type in ["application/octet-stream", ""]:
-            if ext.lower() in [".mp3", ".mpeg"]:
-                mime_type = "audio/mp3"
-            elif ext.lower() == ".mp4":
-                mime_type = "video/mp4"
-            elif ext.lower() == ".wav":
-                mime_type = "audio/wav"
-            else:
-                mime_type = "audio/mp3" # Fallback
-
-        uploaded_file = await asyncio.to_thread(
-            genai.upload_file, 
-            path=temp_file_path, 
-            mime_type=mime_type
-        )
+        uploaded_file = await asyncio.to_thread(client.files.upload, file=temp_file_path)
         
-        while uploaded_file.state.name == "PROCESSING":
+        timeout_time = time.time() + 120
+        while uploaded_file.state is not None and uploaded_file.state.name == "PROCESSING":
+            if time.time() > timeout_time:
+                raise TimeoutError("Google dosyayı 120 saniyede işleyemedi.")
             await asyncio.sleep(2)
-            uploaded_file = await asyncio.to_thread(genai.get_file, uploaded_file.name)
+            uploaded_file = await asyncio.to_thread(client.files.get, name=uploaded_file.name)
             
-        if uploaded_file.state.name == "FAILED":
+        if uploaded_file.state is not None and uploaded_file.state.name == "FAILED":
             raise Exception("Google Gemini dosyayı işleyemedi.")
 
-        model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
-            generation_config={"response_mime_type": "application/json"}
-        )
-        
-        max_deneme = 3
-        response_text = ""
-        
-        for deneme in range(max_deneme):
-            try:
-                response = await asyncio.to_thread(
-                    model.generate_content,
-                    [uploaded_file, PROMPT]
-                )
-                response_text = response.text
+        response_text = None
+        basarili_model = None
+        son_hata = None
+
+        for model_adi in DENENECEK_MODELLER:
+            for deneme in range(3):
+                try:
+                    response = await asyncio.to_thread(
+                        client.models.generate_content,
+                        model=model_adi,
+                        contents=[uploaded_file, PROMPT],
+                        config=types.GenerateContentConfig(response_mime_type="application/json")
+                    )
+                    response_text = response.text
+                    basarili_model = model_adi
+                    break
+                except Exception as e:
+                    son_hata = e
+                    hata_str = str(e)
+                    if "503" in hata_str and deneme < 2:
+                        await asyncio.sleep(4)
+                        continue
+                    break
+            
+            if response_text:
                 break
-            except Exception as e:
-                hata_str = str(e)
-                if "503" in hata_str and deneme < max_deneme - 1:
-                    await asyncio.sleep(5) 
-                    continue
-                else:
-                    raise e
+
+        if not response_text:
+            raise son_hata or Exception("Tüm modeller denendi fakat yanıt alınamadı.")
 
         try:
             result_data = json.loads(response_text)
@@ -109,16 +114,13 @@ async def analyze_audio(file: UploadFile = File(...)):
 
         return {
             "mesaj": "İşlem tamamlandı.",
+            "model": basarili_model,
             "tam_metin": transcript,
             "gorevler": gorevler,
         }
 
     except Exception as e:
         hata_mesaji = str(e)
-        detay = getattr(e, 'content', '') or getattr(e, 'response', '')
-        if detay:
-            hata_mesaji += f" | Google Detayı: {detay}"
-
         print(f"Kritik Hata: {hata_mesaji}")
         return {
             "mesaj": "İşlem tamamlandı.",
@@ -131,6 +133,6 @@ async def analyze_audio(file: UploadFile = File(...)):
             os.remove(temp_file_path)
         if uploaded_file is not None:
             try:
-                await asyncio.to_thread(genai.delete_file, uploaded_file.name)
-            except:
+                await asyncio.to_thread(client.files.delete, name=uploaded_file.name)
+            except Exception:
                 pass
