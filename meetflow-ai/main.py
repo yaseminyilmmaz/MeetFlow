@@ -36,7 +36,7 @@ Format:
 
 @app.get("/")
 def read_root():
-    return {"mesaj": "MeetFlow AI Mikroservisi calisiyor (Stabil Sürüm)!"}
+    return {"mesaj": "MeetFlow AI Mikroservisi calisiyor (MIME Korumalı)!"}
 
 @app.post("/analyze-audio")
 async def analyze_audio(file: UploadFile = File(...)):
@@ -50,7 +50,22 @@ async def analyze_audio(file: UploadFile = File(...)):
     uploaded_file = None
     
     try:
-        uploaded_file = await asyncio.to_thread(genai.upload_file, temp_file_path)
+        mime_type = file.content_type
+        if not mime_type or mime_type in ["application/octet-stream", ""]:
+            if ext.lower() in [".mp3", ".mpeg"]:
+                mime_type = "audio/mp3"
+            elif ext.lower() == ".mp4":
+                mime_type = "video/mp4"
+            elif ext.lower() == ".wav":
+                mime_type = "audio/wav"
+            else:
+                mime_type = "audio/mp3" # Fallback
+
+        uploaded_file = await asyncio.to_thread(
+            genai.upload_file, 
+            path=temp_file_path, 
+            mime_type=mime_type
+        )
         
         while uploaded_file.state.name == "PROCESSING":
             await asyncio.sleep(2)
@@ -59,7 +74,10 @@ async def analyze_audio(file: UploadFile = File(...)):
         if uploaded_file.state.name == "FAILED":
             raise Exception("Google Gemini dosyayı işleyemedi.")
 
-        model = genai.GenerativeModel(model_name="gemini-1.5-flash")
+        model = genai.GenerativeModel(
+            model_name="gemini-1.5-flash",
+            generation_config={"response_mime_type": "application/json"}
+        )
         
         max_deneme = 3
         response_text = ""
@@ -75,8 +93,7 @@ async def analyze_audio(file: UploadFile = File(...)):
             except Exception as e:
                 hata_str = str(e)
                 if "503" in hata_str and deneme < max_deneme - 1:
-                    print(f"Yoğunluk (503) tespit edildi. 5 saniye bekleniyor... (Deneme {deneme+1})")
-                    await asyncio.sleep(5) # 5 saniye bekle ve tekrar dene
+                    await asyncio.sleep(5) 
                     continue
                 else:
                     raise e
@@ -98,10 +115,14 @@ async def analyze_audio(file: UploadFile = File(...)):
 
     except Exception as e:
         hata_mesaji = str(e)
+        detay = getattr(e, 'content', '') or getattr(e, 'response', '')
+        if detay:
+            hata_mesaji += f" | Google Detayı: {detay}"
+
         print(f"Kritik Hata: {hata_mesaji}")
         return {
             "mesaj": "İşlem tamamlandı.",
-            "tam_metin": f"SİSTEM HATASI: Google şu an yanıt veremiyor ({hata_mesaji[:50]})...",
+            "tam_metin": f"SİSTEM HATASI: {hata_mesaji}",
             "gorevler": json.dumps([{"title": "Hata | İşlem Başarısız"}], ensure_ascii=False)
         }
 
