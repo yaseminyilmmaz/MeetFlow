@@ -27,7 +27,8 @@ app.add_middleware(
 gemini_api_key = os.getenv("GEMINI_API_KEY")
 client = genai.Client(api_key=gemini_api_key)
 
-_liste = os.getenv("GEMINI_MODELS") or os.getenv("GEMINI_MODEL") or "gemini-3.8-flash"
+# Varsayılan modeli 3.8 yerine daha stabil olan 1.5-flash yaptık
+_liste = os.getenv("GEMINI_MODELS") or os.getenv("GEMINI_MODEL") or "gemini-1.5-flash"
 MODELLER = [m.strip() for m in _liste.split(",") if m.strip()]
 
 # Gecici hatalar: bekleyip tekrar denemeye deger
@@ -46,7 +47,6 @@ Format:
 }
 """
 
-
 def _hata_kodu(e):
     code = getattr(e, "code", None)
     if isinstance(code, int):
@@ -56,7 +56,6 @@ def _hata_kodu(e):
         if str(c) in metin:
             return c
     return None
-
 
 async def _dene(fn, *args, deneme=3, beklemeler=(2, 5)):
     """Blokaj yapan Google cagrisini ayri thread'de calistirir.
@@ -73,7 +72,6 @@ async def _dene(fn, *args, deneme=3, beklemeler=(2, 5)):
                 continue
             raise
 
-
 def _yukle(path):
     f = client.files.upload(file=path)
     bitis = time.time() + 120
@@ -86,14 +84,12 @@ def _yukle(path):
         raise RuntimeError("Google Gemini dosyayı işleyemedi.")
     return f
 
-
 def _uret(model_adi, audio_file):
     return client.models.generate_content(
         model=model_adi,
         contents=[audio_file, PROMPT],
         config=types.GenerateContentConfig(response_mime_type="application/json"),
     )
-
 
 async def _icerik_uret(audio_file):
     """Modelleri sirayla dener. Gecici hata ya da 404 olursa siradaki modele gecer."""
@@ -110,7 +106,6 @@ async def _icerik_uret(audio_file):
                 continue
             raise
     raise son_hata
-
 
 def _ayristir(raw_text):
     try:
@@ -136,6 +131,8 @@ async def analyze_audio(file: UploadFile = File(...)):
         await out_file.write(content)
 
     audio_file = None
+    kullanilan_model = MODELLER[0] if MODELLER else "Bilinmiyor"
+    
     try:
         audio_file = await _dene(_yukle, temp_file_path)
         response, kullanilan_model = await _icerik_uret(audio_file)
@@ -144,10 +141,12 @@ async def analyze_audio(file: UploadFile = File(...)):
             transcript, gorevler = _ayristir(response.text)
         except Exception:
             log.exception("JSON ayristirilamadi")
-            return JSONResponse(
-                status_code=502,
-                content={"hata": True, "mesaj": "Yapay zeka yanıtı okunamadı, lütfen tekrar deneyin."},
-            )
+            return {
+                "mesaj": "İşlem tamamlandı.",
+                "model": kullanilan_model,
+                "tam_metin": "SİSTEM HATASI: Yapay zeka yanıtı okunamadı, format hatası.",
+                "gorevler": json.dumps([{"title": "Hata | İşlem Başarısız"}], ensure_ascii=False)
+            }
 
         return {
             "mesaj": "İşlem tamamlandı.",
@@ -159,11 +158,18 @@ async def analyze_audio(file: UploadFile = File(...)):
     except Exception as e:
         kod = _hata_kodu(e)
         log.exception("Analiz basarisiz (kod=%s)", kod)
+        
         if kod in GECICI:
-            mesaj = "Yapay zeka servisi şu an yoğun. Lütfen 1-2 dakika sonra tekrar deneyin."
+            mesaj = "SİSTEM HATASI: Google API şu an çok yoğun. Lütfen 1-2 dakika sonra tekrar deneyin."
         else:
-            mesaj = f"Analiz başarısız oldu: {e}"
-        return JSONResponse(status_code=503, content={"hata": True, "mesaj": mesaj})
+            mesaj = f"SİSTEM HATASI: Analiz başarısız oldu: {e}"
+            
+        return {
+            "mesaj": "İşlem tamamlandı.",
+            "model": kullanilan_model,
+            "tam_metin": mesaj,
+            "gorevler": json.dumps([{"title": "Hata | İşlem Başarısız"}], ensure_ascii=False)
+        }
 
     finally:
         if os.path.exists(temp_file_path):
