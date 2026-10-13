@@ -1,18 +1,11 @@
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 import os
 import aiofiles
 import json
 import uuid
 import asyncio
-import logging
-import time
-from google import genai
-from google.genai import types
-
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger("meetflow-ai")
+import google.generativeai as genai
 
 app = FastAPI()
 
@@ -25,14 +18,8 @@ app.add_middleware(
 )
 
 gemini_api_key = os.getenv("GEMINI_API_KEY")
-client = genai.Client(api_key=gemini_api_key)
-
-# Varsayılan modeli 3.8 yerine daha stabil olan 1.5-flash yaptık
-_liste = os.getenv("GEMINI_MODELS") or os.getenv("GEMINI_MODEL") or "gemini-1.5-flash"
-MODELLER = [m.strip() for m in _liste.split(",") if m.strip()]
-
-# Gecici hatalar: bekleyip tekrar denemeye deger
-GECICI = {429, 500, 503, 504}
+if gemini_api_key:
+    genai.configure(api_key=gemini_api_key)
 
 PROMPT = """
 Bu toplantı ses/video kaydını dinle.
@@ -47,79 +34,9 @@ Format:
 }
 """
 
-def _hata_kodu(e):
-    code = getattr(e, "code", None)
-    if isinstance(code, int):
-        return code
-    metin = str(e)
-    for c in (503, 429, 504, 500, 404):
-        if str(c) in metin:
-            return c
-    return None
-
-async def _dene(fn, *args, deneme=3, beklemeler=(2, 5)):
-    """Blokaj yapan Google cagrisini ayri thread'de calistirir.
-    Gecici hatada (503/429/500/504) artan beklemeyle tekrar dener."""
-    for i in range(deneme):
-        try:
-            return await asyncio.to_thread(fn, *args)
-        except Exception as e:
-            kod = _hata_kodu(e)
-            if kod in GECICI and i < deneme - 1:
-                bekle = beklemeler[min(i, len(beklemeler) - 1)]
-                log.warning("Gecici hata (%s), %s sn sonra tekrar denenecek", kod, bekle)
-                await asyncio.sleep(bekle)
-                continue
-            raise
-
-def _yukle(path):
-    f = client.files.upload(file=path)
-    bitis = time.time() + 120
-    while f.state is not None and f.state.name == "PROCESSING":
-        if time.time() > bitis:
-            raise TimeoutError("Google dosyayi 120 saniyede isleyemedi.")
-        time.sleep(2)
-        f = client.files.get(name=f.name)
-    if f.state is not None and f.state.name == "FAILED":
-        raise RuntimeError("Google Gemini dosyayı işleyemedi.")
-    return f
-
-def _uret(model_adi, audio_file):
-    return client.models.generate_content(
-        model=model_adi,
-        contents=[audio_file, PROMPT],
-        config=types.GenerateContentConfig(response_mime_type="application/json"),
-    )
-
-async def _icerik_uret(audio_file):
-    """Modelleri sirayla dener. Gecici hata ya da 404 olursa siradaki modele gecer."""
-    son_hata = None
-    for model_adi in MODELLER:
-        try:
-            response = await _dene(_uret, model_adi, audio_file)
-            return response, model_adi
-        except Exception as e:
-            son_hata = e
-            kod = _hata_kodu(e)
-            if kod in GECICI or kod == 404:
-                log.warning("%s basarisiz (%s), siradaki model deneniyor", model_adi, kod)
-                continue
-            raise
-    raise son_hata
-
-def _ayristir(raw_text):
-    try:
-        veri = json.loads(raw_text)
-    except Exception:
-        temiz = raw_text.replace("```json", "").replace("```", "").strip()
-        veri = json.loads(temiz)
-    return veri.get("tam_metin", "Metin bulunamadı."), veri.get("gorevler", [])
-
-
 @app.get("/")
 def read_root():
-    return {"mesaj": "MeetFlow AI Mikroservisi calisiyor!", "modeller": MODELLER}
-
+    return {"mesaj": "MeetFlow AI Mikroservisi calisiyor (Stabil Sürüm)!"}
 
 @app.post("/analyze-audio")
 async def analyze_audio(file: UploadFile = File(...)):
@@ -130,52 +47,69 @@ async def analyze_audio(file: UploadFile = File(...)):
         content = await file.read()
         await out_file.write(content)
 
-    audio_file = None
-    kullanilan_model = MODELLER[0] if MODELLER else "Bilinmiyor"
+    uploaded_file = None
     
     try:
-        audio_file = await _dene(_yukle, temp_file_path)
-        response, kullanilan_model = await _icerik_uret(audio_file)
+        uploaded_file = await asyncio.to_thread(genai.upload_file, temp_file_path)
+        
+        while uploaded_file.state.name == "PROCESSING":
+            await asyncio.sleep(2)
+            uploaded_file = await asyncio.to_thread(genai.get_file, uploaded_file.name)
+            
+        if uploaded_file.state.name == "FAILED":
+            raise Exception("Google Gemini dosyayı işleyemedi.")
+
+        model = genai.GenerativeModel(model_name="gemini-1.5-flash")
+        
+        max_deneme = 3
+        response_text = ""
+        
+        for deneme in range(max_deneme):
+            try:
+                response = await asyncio.to_thread(
+                    model.generate_content,
+                    [uploaded_file, PROMPT]
+                )
+                response_text = response.text
+                break
+            except Exception as e:
+                hata_str = str(e)
+                if "503" in hata_str and deneme < max_deneme - 1:
+                    print(f"Yoğunluk (503) tespit edildi. 5 saniye bekleniyor... (Deneme {deneme+1})")
+                    await asyncio.sleep(5) # 5 saniye bekle ve tekrar dene
+                    continue
+                else:
+                    raise e
 
         try:
-            transcript, gorevler = _ayristir(response.text)
+            result_data = json.loads(response_text)
         except Exception:
-            log.exception("JSON ayristirilamadi")
-            return {
-                "mesaj": "İşlem tamamlandı.",
-                "model": kullanilan_model,
-                "tam_metin": "SİSTEM HATASI: Yapay zeka yanıtı okunamadı, format hatası.",
-                "gorevler": json.dumps([{"title": "Hata | İşlem Başarısız"}], ensure_ascii=False)
-            }
+            clean_text = response_text.replace("```json", "").replace("```", "").strip()
+            result_data = json.loads(clean_text)
+
+        transcript = result_data.get("tam_metin", "Metin bulunamadı.")
+        gorevler = json.dumps(result_data.get("gorevler", []), ensure_ascii=False)
 
         return {
             "mesaj": "İşlem tamamlandı.",
-            "model": kullanilan_model,
             "tam_metin": transcript,
-            "gorevler": json.dumps(gorevler, ensure_ascii=False),
+            "gorevler": gorevler,
         }
 
     except Exception as e:
-        kod = _hata_kodu(e)
-        log.exception("Analiz basarisiz (kod=%s)", kod)
-        
-        if kod in GECICI:
-            mesaj = "SİSTEM HATASI: Google API şu an çok yoğun. Lütfen 1-2 dakika sonra tekrar deneyin."
-        else:
-            mesaj = f"SİSTEM HATASI: Analiz başarısız oldu: {e}"
-            
+        hata_mesaji = str(e)
+        print(f"Kritik Hata: {hata_mesaji}")
         return {
             "mesaj": "İşlem tamamlandı.",
-            "model": kullanilan_model,
-            "tam_metin": mesaj,
+            "tam_metin": f"SİSTEM HATASI: Google şu an yanıt veremiyor ({hata_mesaji[:50]})...",
             "gorevler": json.dumps([{"title": "Hata | İşlem Başarısız"}], ensure_ascii=False)
         }
 
     finally:
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
-        if audio_file is not None:
+        if uploaded_file is not None:
             try:
-                await asyncio.to_thread(client.files.delete, name=audio_file.name)
-            except Exception:
+                await asyncio.to_thread(genai.delete_file, uploaded_file.name)
+            except:
                 pass
