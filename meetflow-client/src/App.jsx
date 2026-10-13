@@ -27,6 +27,8 @@ function App() {
 
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [editingTaskTitle, setEditingTaskTitle] = useState("");
+  const [editingTaskUserId, setEditingTaskUserId] = useState("");
+  const [editingTaskPriority, setEditingTaskPriority] = useState("Orta");
   
   const [isDarkMode, setIsDarkMode] = useState(false);
   
@@ -333,18 +335,21 @@ function App() {
   }
 
   const handleStartEdit = (task) => {
-    const { cleanTitle } = parseTaskPriority(task.title);
+    const { priority, cleanTitle } = parseTaskPriority(task.title);
     setEditingTaskId(task.id);
     setEditingTaskTitle(cleanTitle);
+    setEditingTaskPriority(priority);
+    setEditingTaskUserId(task.assignedUserId ? task.assignedUserId.toString() : "");
   }
 
   const handleSaveEdit = (task) => {
     if (!editingTaskTitle.trim()) return;
     
-    const { priority } = parseTaskPriority(task.title);
+    const selectedUserId = editingTaskUserId ? parseInt(editingTaskUserId) : null;
     const updatedTask = {
       ...task,
-      title: `${priority} | ${editingTaskTitle}`
+      title: `${editingTaskPriority} | ${editingTaskTitle}`,
+      assignedUserId: selectedUserId
     };
 
     fetch(`${API_BASE_URL}/api/tasks/${task.id}`, {
@@ -357,6 +362,8 @@ function App() {
         fetchMeetings();
         setEditingTaskId(null);
         setEditingTaskTitle("");
+        setEditingTaskUserId("");
+        setEditingTaskPriority("Orta");
         toast.success("Görev güncellendi!");
       }
     })
@@ -633,6 +640,10 @@ function App() {
           setEditingTaskId={setEditingTaskId}
           editingTaskTitle={editingTaskTitle}
           setEditingTaskTitle={setEditingTaskTitle}
+          editingTaskUserId={editingTaskUserId}
+          setEditingTaskUserId={setEditingTaskUserId}
+          editingTaskPriority={editingTaskPriority}
+          setEditingTaskPriority={setEditingTaskPriority}
           confirmDeleteMeeting={confirmDeleteMeeting}
           handleToggleStatus={handleToggleStatus}
           handleStartEdit={handleStartEdit}
