@@ -7,6 +7,7 @@ import uuid
 import asyncio
 import time
 import logging
+import mimetypes
 
 from google import genai
 from google.genai import types
@@ -74,7 +75,7 @@ async def analyze_audio(file: UploadFile = File(...)):
             "gorevler": json.dumps([{"title": "Hata | API Key Eksik"}], ensure_ascii=False)
         }
 
-    ext = os.path.splitext(file.filename)[1]
+    ext = os.path.splitext(file.filename)[1].lower()
     temp_file_path = f"temp_{uuid.uuid4().hex}{ext}"
 
     async with aiofiles.open(temp_file_path, "wb") as out_file:
@@ -84,7 +85,24 @@ async def analyze_audio(file: UploadFile = File(...)):
     uploaded_file = None
     
     try:
-        uploaded_file = await asyncio.to_thread(client.files.upload, file=temp_file_path)
+        mime_type, _ = mimetypes.guess_type(temp_file_path)
+        if not mime_type:
+            if ext in ['.m4a', '.mp4']:
+                mime_type = 'audio/mp4'
+            elif ext == '.mp3':
+                mime_type = 'audio/mp3'
+            elif ext == '.wav':
+                mime_type = 'audio/wav'
+            elif ext == '.aac':
+                mime_type = 'audio/aac'
+            else:
+                mime_type = 'audio/mpeg'
+
+        uploaded_file = await asyncio.to_thread(
+            client.files.upload, 
+            file=temp_file_path,
+            config=types.UploadFileConfig(mime_type=mime_type)
+        )
         
         timeout_time = time.time() + 120
         while uploaded_file.state is not None and uploaded_file.state.name == "PROCESSING":
@@ -137,7 +155,7 @@ async def analyze_audio(file: UploadFile = File(...)):
             transcript = result_data.get("tam_metin", "Metin bulunamadı.")
             raw_gorevler = result_data.get("gorevler", [])
         elif isinstance(result_data, list):
-            transcript = "Ses kaydı analiz edildi (Sadece görevler listesi döndü)."
+            transcript = "Ses kaydı analiz edildi."
             raw_gorevler = result_data
         else:
             transcript = "Metin bulunamadı."

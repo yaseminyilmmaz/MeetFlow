@@ -14,7 +14,7 @@ export default function AudioAnalyzer({ handleAudioUpload, audioFile, setAudioFi
     }
 
     const fileName = file.name.toLowerCase();
-    const validExtensions = ['.mp3', '.m4a', '.wav', '.aac', '.ogg', '.mp4'];
+    const validExtensions = ['.mp3', '.m4a', '.wav', '.aac', '.ogg', '.mp4', '.caf', '.m4p'];
     
     const isValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
     const isValidType = file.type.startsWith('audio/') || file.type.startsWith('video/') || file.type === '';
@@ -34,11 +34,10 @@ export default function AudioAnalyzer({ handleAudioUpload, audioFile, setAudioFi
         Yapay Zeka ile Ses Analizi
       </h3>
       <form onSubmit={handleAudioUpload} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-        
+
         <input 
           type="file" 
           id="audio-upload"
-          accept="audio/*, video/*, .mp3, .m4a, .wav, .aac, .ogg, .mp4"
           onChange={onFileSelect}
           style={{ display: 'none' }}
         />
