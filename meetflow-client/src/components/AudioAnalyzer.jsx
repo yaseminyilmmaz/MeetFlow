@@ -13,11 +13,14 @@ export default function AudioAnalyzer({ handleAudioUpload, audioFile, setAudioFi
       return;
     }
 
-    const validTypes = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'video/mp4'];
-    const isValidExtension = file.name.endsWith('.mp3') || file.name.endsWith('.mp4') || file.name.endsWith('.wav');
+    const fileName = file.name.toLowerCase();
+    const validExtensions = ['.mp3', '.m4a', '.wav', '.aac', '.ogg', '.mp4'];
     
-    if (!validTypes.includes(file.type) && !isValidExtension) {
-      toast.error("Geçersiz format! Sadece .mp3, .wav veya .mp4 yükleyebilirsiniz.");
+    const isValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
+    const isValidType = file.type.startsWith('audio/') || file.type.startsWith('video/') || file.type === '';
+
+    if (!isValidExtension && !isValidType) {
+      toast.error("Geçersiz format! Sadece ses veya video dosyası (.mp3, .m4a, .wav, .mp4) yükleyebilirsiniz.");
       e.target.value = null;
       return;
     }
@@ -35,7 +38,7 @@ export default function AudioAnalyzer({ handleAudioUpload, audioFile, setAudioFi
         <input 
           type="file" 
           id="audio-upload"
-          accept="audio/*, video/mp4"
+          accept="audio/*, video/*, .mp3, .m4a, .wav, .aac, .ogg, .mp4"
           onChange={onFileSelect}
           style={{ display: 'none' }}
         />
@@ -45,7 +48,7 @@ export default function AudioAnalyzer({ handleAudioUpload, audioFile, setAudioFi
             <polyline points="17 8 12 3 7 8"></polyline>
             <line x1="12" y1="3" x2="12" y2="15"></line>
           </svg>
-          {audioFile ? audioFile.name : "Toplantı Kaydı Seç (.mp3, .mp4)"}
+          {audioFile ? audioFile.name : "Toplantı Kaydı Seç (.mp3, .m4a, .mp4)"}
         </label>
 
         <button 
