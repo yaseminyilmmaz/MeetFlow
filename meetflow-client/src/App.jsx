@@ -92,16 +92,20 @@ function App() {
   const parseTaskPriority = (fullTitle) => {
     if (!fullTitle) return { priority: "Orta", cleanTitle: "" };
     
-    if (fullTitle.startsWith("Acil | ")) return { priority: "Acil", cleanTitle: fullTitle.substring(7) };
-    if (fullTitle.startsWith("Orta | ")) return { priority: "Orta", cleanTitle: fullTitle.substring(7) };
-    if (fullTitle.startsWith("Düşük | ")) return { priority: "Düşük", cleanTitle: fullTitle.substring(9) };
+
+    const match = fullTitle.match(/^(Acil|Orta|Düşük)\s*\|\s*(.*)$/i);
     
-    if (fullTitle.includes(" | ")) {
-      const parts = fullTitle.split(" | ");
-      return { priority: parts[0] || "Orta", cleanTitle: parts.slice(1).join(" | ") };
+    if (match) {
+      const priorityStr = match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase();
+      return { priority: priorityStr, cleanTitle: match[2].trim() };
     }
 
-    return { priority: "Orta", cleanTitle: fullTitle };
+    if (fullTitle.includes("|")) {
+      const parts = fullTitle.split("|");
+      return { priority: parts[0].trim() || "Orta", cleanTitle: parts.slice(1).join("|").trim() };
+    }
+
+    return { priority: "Orta", cleanTitle: fullTitle.trim() };
   }
 
   const getPriorityStyles = (priority, status) => {
@@ -284,7 +288,7 @@ function App() {
 
     const selectedUserId = taskUsers[meetingId] ? parseInt(taskUsers[meetingId]) : null;
     const priority = taskPriorities[meetingId] || "Orta";
-    const finalTitle = `${priority} | ${taskTitle}`;
+    const finalTitle = `${priority} | ${taskTitle.trim()}`;
 
     const newTask = {
       title: finalTitle,
@@ -345,7 +349,7 @@ function App() {
   const handleStartEdit = (task) => {
     const { priority, cleanTitle } = parseTaskPriority(task.title);
     setEditingTaskId(task.id);
-    setEditingTaskTitle(cleanTitle);
+    setEditingTaskTitle(cleanTitle); 
     setEditingTaskPriority(priority); 
     setEditingTaskUserId(task.assignedUserId ? task.assignedUserId.toString() : ""); 
   }
@@ -356,7 +360,7 @@ function App() {
     const selectedUserId = editingTaskUserId ? parseInt(editingTaskUserId) : null;
     const updatedTask = {
       ...task,
-      title: `${editingTaskPriority} | ${editingTaskTitle}`,
+      title: `${editingTaskPriority} | ${editingTaskTitle.trim()}`,
       assignedUserId: selectedUserId
     };
 
