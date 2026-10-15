@@ -133,8 +133,17 @@ async def analyze_audio(file: UploadFile = File(...)):
             clean_text = response_text.replace("```json", "").replace("```", "").strip()
             result_data = json.loads(clean_text)
 
-        transcript = result_data.get("tam_metin", "Metin bulunamadı.")
-        gorevler = json.dumps(result_data.get("gorevler", []), ensure_ascii=False)
+        if isinstance(result_data, dict):
+            transcript = result_data.get("tam_metin", "Metin bulunamadı.")
+            raw_gorevler = result_data.get("gorevler", [])
+        elif isinstance(result_data, list):
+            transcript = "Ses kaydı analiz edildi (Sadece görevler listesi döndü)."
+            raw_gorevler = result_data
+        else:
+            transcript = "Metin bulunamadı."
+            raw_gorevler = []
+
+        gorevler = json.dumps(raw_gorevler, ensure_ascii=False)
 
         return {
             "mesaj": "İşlem tamamlandı.",
