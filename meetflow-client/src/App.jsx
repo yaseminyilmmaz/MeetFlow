@@ -90,9 +90,17 @@ function App() {
   }
 
   const parseTaskPriority = (fullTitle) => {
+    if (!fullTitle) return { priority: "Orta", cleanTitle: "" };
+    
     if (fullTitle.startsWith("Acil | ")) return { priority: "Acil", cleanTitle: fullTitle.substring(7) };
     if (fullTitle.startsWith("Orta | ")) return { priority: "Orta", cleanTitle: fullTitle.substring(7) };
     if (fullTitle.startsWith("Düşük | ")) return { priority: "Düşük", cleanTitle: fullTitle.substring(9) };
+    
+    if (fullTitle.includes(" | ")) {
+      const parts = fullTitle.split(" | ");
+      return { priority: parts[0] || "Orta", cleanTitle: parts.slice(1).join(" | ") };
+    }
+
     return { priority: "Orta", cleanTitle: fullTitle };
   }
 
@@ -338,7 +346,7 @@ function App() {
     const { priority, cleanTitle } = parseTaskPriority(task.title);
     setEditingTaskId(task.id);
     setEditingTaskTitle(cleanTitle);
-    setEditingTaskPriority(priority); // Önceliği state'e at
+    setEditingTaskPriority(priority); 
     setEditingTaskUserId(task.assignedUserId ? task.assignedUserId.toString() : ""); 
   }
 
