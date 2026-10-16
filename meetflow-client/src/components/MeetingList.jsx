@@ -40,8 +40,8 @@ export default function MeetingList({
             : [];
 
           const isExpanded = expandedMeetings[meeting.id];
-          const visibleTasks = isExpanded ? filteredTasks : filteredTasks.slice(0, 2);
-          const hasMoreTasks = filteredTasks.length > 2;
+          const visibleTasks = isExpanded ? filteredTasks : filteredTasks.slice(0, 1);
+          const hasMoreTasks = filteredTasks.length > 1;
 
           return (
             <li key={meeting.id} className="hide-item show-item" style={{ backgroundColor: 'var(--bg-card)', padding: '30px', borderRadius: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', height: '100%' }}>
