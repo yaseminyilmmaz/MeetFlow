@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 export default function MeetingList({
   filteredMeetings, filterUserId, users, isDarkMode, 
   taskPriorities, setTaskPriorities, taskInputs, setTaskInputs, taskUsers, setTaskUsers,
@@ -6,6 +8,15 @@ export default function MeetingList({
   confirmDeleteMeeting, handleToggleStatus, handleStartEdit, handleSaveEdit, handleDeleteTask, handleAddTask,
   getCountdown, parseTaskPriority, getPriorityStyles, getUserName
 }) {
+  const [expandedMeetings, setExpandedMeetings] = useState({});
+
+  const toggleExpand = (meetingId) => {
+    setExpandedMeetings(prev => ({
+      ...prev,
+      [meetingId]: !prev[meetingId]
+    }));
+  };
+
   return (
     <ul style={{ listStyleType: 'none', padding: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '30px', alignItems: 'start', width: '100%' }}>
       {filteredMeetings.length === 0 ? (
@@ -15,22 +26,30 @@ export default function MeetingList({
       ) : (
         filteredMeetings.map(meeting => {
           const mTotalTasks = meeting.tasks ? meeting.tasks.length : 0;
-          const mCompletedTasks = meeting.tasks ? meeting.tasks.filter(t => t.status === "Tamamlandı").length : 0;
+          const mCompletedTasks = meeting.tasks ? meeting.tasks.filter(t => t.status === "Tamamlandı" || t.Status === "Tamamlandı").length : 0;
           const progressPercentage = mTotalTasks === 0 ? 0 : Math.round((mCompletedTasks / mTotalTasks) * 100);
-          
+
           let progressColor = '#0052cc';
           if (progressPercentage === 100) progressColor = '#36b37e';
           else if (progressPercentage > 50) progressColor = '#ffab00';
 
           const countdown = getCountdown(meeting.date);
 
+          const filteredTasks = meeting.tasks && meeting.tasks.length > 0 
+            ? meeting.tasks.filter(task => filterUserId === "" || task.assignedUserId === parseInt(filterUserId) || task.AssignedUserId === parseInt(filterUserId))
+            : [];
+
+          const isExpanded = expandedMeetings[meeting.id];
+          const visibleTasks = isExpanded ? filteredTasks : filteredTasks.slice(0, 2);
+          const hasMoreTasks = filteredTasks.length > 2;
+
           return (
             <li key={meeting.id} className="hide-item show-item" style={{ backgroundColor: 'var(--bg-card)', padding: '30px', borderRadius: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-              
+
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
                 <div style={{ width: '100%' }}>
                   <strong style={{ fontSize: '1.3em', color: 'var(--text-title)', fontWeight: '700', letterSpacing: '-0.3px', display: 'block', marginBottom: '5px' }}>{meeting.title}</strong>
-                  
+
                   <div style={{ display: 'flex', alignItems: 'center', marginBottom: '15px', gap: '10px' }}>
                     <span style={{ color: 'var(--text-muted)', fontSize: '0.85em', fontWeight: '600' }}>
                       {new Date(meeting.date).toLocaleString('tr-TR')}
@@ -39,7 +58,7 @@ export default function MeetingList({
                       {countdown.text}
                     </span>
                   </div>
-                  
+
                   <div style={{ width: '100%', backgroundColor: 'var(--bg-hover)', borderRadius: '8px', height: '10px', marginBottom: '5px', overflow: 'hidden' }}>
                     <div style={{ width: `${progressPercentage}%`, backgroundColor: progressColor, height: '100%', transition: 'width 0.5s ease-in-out, background-color 0.3s' }}></div>
                   </div>
@@ -47,7 +66,7 @@ export default function MeetingList({
                     % {progressPercentage} Tamamlandı
                   </div>
                 </div>
-                
+
                 <button 
                   className="btn-danger"
                   onClick={() => confirmDeleteMeeting(meeting.id)}
@@ -55,124 +74,138 @@ export default function MeetingList({
                   Toplantıyı Sil
                 </button>
               </div>
-              
+
               <div style={{ marginTop: '20px' }}>
                 <h4 style={{ margin: '0 0 15px 0', fontSize: '0.9em', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Alt Görevler
                 </h4>
-                
-                <ul style={{ padding: '0', margin: '0 0 25px 0', listStyle: 'none' }}>
-                  {meeting.tasks && meeting.tasks.length > 0 ? (
-                    meeting.tasks
-                      .filter(task => filterUserId === "" || task.assignedUserId === parseInt(filterUserId))
-                      .map(task => {
-                        const { priority, cleanTitle } = parseTaskPriority(task.title);
-                        const styles = getPriorityStyles(priority, task.status);
-                        
-                        return (
-                          <li key={task.id} style={{ display: 'flex', alignItems: 'center', padding: '12px 15px', border: '1px solid var(--border-light)', borderLeft: `5px solid ${styles.borderColor}`, borderRadius: '6px', marginBottom: '8px', backgroundColor: task.status === "Tamamlandı" ? 'var(--bg-hover)' : 'var(--bg-card)', transition: '0.2s', flexWrap: 'wrap', gap: '10px' }}>
-                            
-                            <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: '200px' }}>
-                              <input 
-                                type="checkbox" 
-                                checked={task.status === "Tamamlandı"}
-                                onChange={() => handleToggleStatus(task)}
-                                style={{ marginRight: '15px', cursor: 'pointer', width: '16px', height: '16px', accentColor: '#0052cc' }}
-                              />
 
-                              {editingTaskId === task.id ? (
-                                <div style={{ display: 'flex', flex: 1, gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                <ul style={{ padding: '0', margin: '0 0 15px 0', listStyle: 'none' }}>
+                  {visibleTasks.length > 0 ? (
+                    visibleTasks.map(task => {
+                      const fullTitle = task.title || task.Title;
+                      const taskStatus = task.status || task.Status;
+                      const assignedUser = task.assignedUserId || task.AssignedUserId;
+                      const { priority, cleanTitle } = parseTaskPriority(fullTitle);
+                      const styles = getPriorityStyles(priority, taskStatus);
 
-                                  <select 
-                                    value={editingTaskPriority} 
-                                    onChange={(e) => setEditingTaskPriority(e.target.value)}
-                                    style={{ padding: '4px 8px', border: '1px solid #0052cc', borderRadius: '4px', outline: 'none', backgroundColor: 'var(--bg-input)', fontSize: '0.85em', fontWeight: '600', cursor: 'pointer' }}
-                                  >
-                                    <option value="Acil">Acil</option>
-                                    <option value="Orta">Orta</option>
-                                    <option value="Düşük">Düşük</option>
-                                  </select>
+                      return (
+                        <li key={task.id || task.Id} style={{ display: 'flex', alignItems: 'center', padding: '12px 15px', border: '1px solid var(--border-light)', borderLeft: `5px solid ${styles.borderColor}`, borderRadius: '6px', marginBottom: '8px', backgroundColor: taskStatus === "Tamamlandı" ? 'var(--bg-hover)' : 'var(--bg-card)', transition: '0.2s', flexWrap: 'wrap', gap: '10px' }}>
 
-                                  <input 
-                                    type="text" 
-                                    value={editingTaskTitle}
-                                    onChange={(e) => setEditingTaskTitle(e.target.value)}
-                                    style={{ padding: '4px 8px', flex: '2 1 150px', border: '1px solid #0052cc', borderRadius: '4px', outline: 'none', backgroundColor: 'var(--bg-input)' }}
-                                  />
-                                  
-                                  <select 
-                                    value={editingTaskUserId} 
-                                    onChange={(e) => setEditingTaskUserId(e.target.value)}
-                                    style={{ padding: '4px 8px', flex: '1 1 120px', border: '1px solid #0052cc', borderRadius: '4px', outline: 'none', backgroundColor: 'var(--bg-input)', fontSize: '0.85em', fontWeight: '600', cursor: 'pointer' }}
-                                  >
-                                    <option value="">Atama Yap</option>
-                                    {users.map(user => (
-                                      <option key={user.id} value={user.id}>{user.fullName}</option>
-                                    ))}
-                                  </select>
+                          <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: '200px' }}>
+                            <input 
+                              type="checkbox" 
+                              checked={taskStatus === "Tamamlandı"}
+                              onChange={() => handleToggleStatus(task)}
+                              style={{ marginRight: '15px', cursor: 'pointer', width: '16px', height: '16px', accentColor: '#0052cc' }}
+                            />
 
-                                  <button 
-                                    onClick={() => handleSaveEdit(task)}
-                                    style={{ backgroundColor: '#36b37e', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8em', fontWeight: '600' }}>
-                                    Kaydet
-                                  </button>
-                                  <button 
-                                    onClick={() => setEditingTaskId(null)}
-                                    style={{ backgroundColor: '#ebecf0', color: '#42526e', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8em', fontWeight: '600' }}>
-                                    İptal
-                                  </button>
-                                </div>
-                              ) : (
-                                <span style={{ 
-                                  flex: 1, 
-                                  textDecoration: task.status === "Tamamlandı" ? 'line-through' : 'none',
-                                  color: task.status === "Tamamlandı" ? 'var(--text-muted)' : 'var(--text-normal)',
-                                  fontSize: '0.95em',
-                                  fontWeight: '500'
-                                }}>
-                                  {cleanTitle}
-                                </span> 
-                              )}
-                            </div>
-                            
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                              {task.status !== "Tamamlandı" && (
-                                <span style={{ fontSize: '0.75em', backgroundColor: styles.tagBg, color: styles.tagColor, padding: '4px 8px', borderRadius: '4px', fontWeight: '700' }}>
-                                  {priority}
-                                </span>
-                              )}
+                            {editingTaskId === (task.id || task.Id) ? (
+                              <div style={{ display: 'flex', flex: 1, gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
 
-                              <span style={{ fontSize: '0.8em', backgroundColor: '#e3fcef', color: '#006644', padding: '4px 10px', borderRadius: '3px', fontWeight: '600' }}>
-                                {getUserName(task.assignedUserId)}
-                              </span>
+                                <select 
+                                  value={editingTaskPriority} 
+                                  onChange={(e) => setEditingTaskPriority(e.target.value)}
+                                  style={{ padding: '4px 8px', border: '1px solid #0052cc', borderRadius: '4px', outline: 'none', backgroundColor: 'var(--bg-input)', fontSize: '0.85em', fontWeight: '600', cursor: 'pointer' }}
+                                >
+                                  <option value="Acil">Acil</option>
+                                  <option value="Orta">Orta</option>
+                                  <option value="Düşük">Düşük</option>
+                                </select>
 
-                              <span style={{ fontSize: '0.8em', backgroundColor: task.status === "Tamamlandı" ? '#eae6ff' : '#ffebe6', color: task.status === "Tamamlandı" ? '#403294' : '#bf2600', padding: '4px 10px', borderRadius: '3px', fontWeight: '600' }}>
-                                {task.status}
-                              </span>
+                                <input 
+                                  type="text" 
+                                  value={editingTaskTitle}
+                                  onChange={(e) => setEditingTaskTitle(e.target.value)}
+                                  style={{ padding: '4px 8px', flex: '2 1 150px', border: '1px solid #0052cc', borderRadius: '4px', outline: 'none', backgroundColor: 'var(--bg-input)' }}
+                                />
 
-                              {editingTaskId !== task.id && (
+                                <select 
+                                  value={editingTaskUserId} 
+                                  onChange={(e) => setEditingTaskUserId(e.target.value)}
+                                  style={{ padding: '4px 8px', flex: '1 1 120px', border: '1px solid #0052cc', borderRadius: '4px', outline: 'none', backgroundColor: 'var(--bg-input)', fontSize: '0.85em', fontWeight: '600', cursor: 'pointer' }}
+                                >
+                                  <option value="">Atama Yap</option>
+                                  {users.map(user => (
+                                    <option key={user.id} value={user.id}>{user.fullName}</option>
+                                  ))}
+                                </select>
+
                                 <button 
-                                  onClick={() => handleStartEdit(task)}
-                                  style={{ backgroundColor: '#ffab00', color: 'white', border: 'none', borderRadius: '4px', padding: '5px 10px', cursor: 'pointer', fontSize: '0.8em', fontWeight: '600', transition: '0.2s' }}>
-                                  Düzenle
+                                  onClick={() => handleSaveEdit(task)}
+                                  style={{ backgroundColor: '#36b37e', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8em', fontWeight: '600' }}>
+                                  Kaydet
                                 </button>
-                              )}
+                                <button 
+                                  onClick={() => setEditingTaskId(null)}
+                                  style={{ backgroundColor: '#ebecf0', color: '#42526e', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8em', fontWeight: '600' }}>
+                                  İptal
+                                </button>
+                              </div>
+                            ) : (
+                              <span style={{ 
+                                flex: 1, 
+                                textDecoration: taskStatus === "Tamamlandı" ? 'line-through' : 'none',
+                                color: taskStatus === "Tamamlandı" ? 'var(--text-muted)' : 'var(--text-normal)',
+                                fontSize: '0.95em',
+                                fontWeight: '500'
+                              }}>
+                                {cleanTitle}
+                              </span> 
+                            )}
+                          </div>
 
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                            {taskStatus !== "Tamamlandı" && (
+                              <span style={{ fontSize: '0.75em', backgroundColor: styles.tagBg, color: styles.tagColor, padding: '4px 8px', borderRadius: '4px', fontWeight: '700' }}>
+                                {priority}
+                              </span>
+                            )}
+
+                            <span style={{ fontSize: '0.8em', backgroundColor: '#e3fcef', color: '#006644', padding: '4px 10px', borderRadius: '3px', fontWeight: '600' }}>
+                              {getUserName(assignedUser)}
+                            </span>
+
+                            <span style={{ fontSize: '0.8em', backgroundColor: taskStatus === "Tamamlandı" ? '#eae6ff' : '#ffebe6', color: taskStatus === "Tamamlandı" ? '#403294' : '#bf2600', padding: '4px 10px', borderRadius: '3px', fontWeight: '600' }}>
+                              {taskStatus}
+                            </span>
+
+                            {editingTaskId !== (task.id || task.Id) && (
                               <button 
-                                className="btn-danger"
-                                onClick={() => handleDeleteTask(task.id)}
-                                style={{ backgroundColor: '#ff5630', color: 'white', border: 'none', borderRadius: '4px', padding: '5px 10px', cursor: 'pointer', fontSize: '0.8em', fontWeight: '600', transition: '0.2s' }}>
-                                Sil
+                                onClick={() => handleStartEdit(task)}
+                                style={{ backgroundColor: '#ffab00', color: 'white', border: 'none', borderRadius: '4px', padding: '5px 10px', cursor: 'pointer', fontSize: '0.8em', fontWeight: '600', transition: '0.2s' }}>
+                                Düzenle
                               </button>
-                            </div>
-                          </li>
-                        );
-                      })
+                            )}
+
+                            <button 
+                              className="btn-danger"
+                              onClick={() => handleDeleteTask(task.id || task.Id)}
+                              style={{ backgroundColor: '#ff5630', color: 'white', border: 'none', borderRadius: '4px', padding: '5px 10px', cursor: 'pointer', fontSize: '0.8em', fontWeight: '600', transition: '0.2s' }}>
+                              Sil
+                            </button>
+                          </div>
+                        </li>
+                      );
+                    })
                   ) : (
                     <li style={{ color: 'var(--text-muted)', fontSize: '0.9em', padding: '10px 0', fontStyle: 'italic' }}>Kayıtlı görev bulunamadı.</li>
                   )}
                 </ul>
-                
+
+                {hasMoreTasks && (
+                  <div style={{ textAlign: 'center', marginBottom: '20px', marginTop: '-5px' }}>
+                    <button 
+                      onClick={() => toggleExpand(meeting.id)}
+                      style={{ background: 'none', border: 'none', color: '#0052cc', cursor: 'pointer', fontWeight: '700', fontSize: '0.85em', transition: 'color 0.2s' }}
+                      onMouseOver={(e) => e.target.style.color = '#003d99'}
+                      onMouseOut={(e) => e.target.style.color = '#0052cc'}
+                    >
+                      {isExpanded ? 'Daralt ▲' : `Tüm Görevleri Göster (${filteredTasks.length}) ▼`}
+                    </button>
+                  </div>
+                )}
+
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                   <select 
                     value={taskPriorities[meeting.id] || "Orta"} 
