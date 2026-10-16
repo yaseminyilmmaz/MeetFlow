@@ -18,7 +18,7 @@ export default function MeetingList({
   };
 
   return (
-    <ul style={{ listStyleType: 'none', padding: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '30px', alignItems: 'start', width: '100%' }}>
+    <ul style={{ listStyleType: 'none', padding: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '30px', alignItems: 'stretch', width: '100%' }}>
       {filteredMeetings.length === 0 ? (
         <div className="hide-item" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '50px', backgroundColor: 'var(--bg-card)', borderRadius: '10px', color: 'var(--text-muted)', border: '1px dashed var(--border-light)' }}>
           <p style={{ fontSize: '1.1em', margin: 0 }}>Aradığınız kritere uygun toplantı bulunamadı.</p>
@@ -44,7 +44,7 @@ export default function MeetingList({
           const hasMoreTasks = filteredTasks.length > 2;
 
           return (
-            <li key={meeting.id} className="hide-item show-item" style={{ backgroundColor: 'var(--bg-card)', padding: '30px', borderRadius: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <li key={meeting.id} className="hide-item show-item" style={{ backgroundColor: 'var(--bg-card)', padding: '30px', borderRadius: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', height: '100%' }}>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
                 <div style={{ width: '100%' }}>
@@ -75,12 +75,12 @@ export default function MeetingList({
                 </button>
               </div>
 
-              <div style={{ marginTop: '20px' }}>
+              <div style={{ marginTop: '20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <h4 style={{ margin: '0 0 15px 0', fontSize: '0.9em', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Alt Görevler
                 </h4>
 
-                <ul style={{ padding: '0', margin: '0 0 15px 0', listStyle: 'none' }}>
+                <ul style={{ padding: '0', margin: '0 0 15px 0', listStyle: 'none', flex: 1 }}>
                   {visibleTasks.length > 0 ? (
                     visibleTasks.map(task => {
                       const fullTitle = task.title || task.Title;
@@ -194,7 +194,7 @@ export default function MeetingList({
                 </ul>
 
                 {hasMoreTasks && (
-                  <div style={{ textAlign: 'center', marginBottom: '20px', marginTop: '-5px' }}>
+                  <div style={{ textAlign: 'center', marginBottom: '20px', marginTop: 'auto' }}>
                     <button 
                       onClick={() => toggleExpand(meeting.id)}
                       style={{ background: 'none', border: 'none', color: '#0052cc', cursor: 'pointer', fontWeight: '700', fontSize: '0.85em', transition: 'color 0.2s' }}
@@ -206,7 +206,7 @@ export default function MeetingList({
                   </div>
                 )}
 
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: hasMoreTasks ? '0' : 'auto' }}>
                   <select 
                     value={taskPriorities[meeting.id] || "Orta"} 
                     onChange={(e) => setTaskPriorities({...taskPriorities, [meeting.id]: e.target.value})}
