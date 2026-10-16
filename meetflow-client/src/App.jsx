@@ -21,7 +21,7 @@ function App() {
   const [newUserName, setNewUserName] = useState("")
   const [newUserEmail, setNewUserEmail] = useState("")
   const [newUserDept, setNewUserDept] = useState("")
-  
+
   const [filterUserId, setFilterUserId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -29,23 +29,23 @@ function App() {
   const [editingTaskTitle, setEditingTaskTitle] = useState("");
   const [editingTaskUserId, setEditingTaskUserId] = useState("");
   const [editingTaskPriority, setEditingTaskPriority] = useState("Orta");
-  
+
   const [isDarkMode, setIsDarkMode] = useState(false);
-  
+
   const [audioFile, setAudioFile] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  
+
   const [analyzedText, setAnalyzedText] = useState("");
 
   const fetchMeetings = () => {
-    fetch(`${API_BASE_URL}/api/meetings`)
+    fetch(`${API_BASE_URL}/api/meetings`, { cache: 'no-store' })
       .then(res => res.json())
       .then(data => setMeetings(data))
       .catch(err => console.error(err))
   }
 
   const fetchUsers = () => {
-    fetch(`${API_BASE_URL}/api/users`)
+    fetch(`${API_BASE_URL}/api/users`, { cache: 'no-store' })
       .then(res => res.json())
       .then(data => setUsers(data))
       .catch(err => console.error(err))
@@ -77,13 +77,13 @@ function App() {
     const target = new Date(dateString).getTime();
     const now = new Date().getTime();
     const diff = target - now;
-    
+
     if (isNaN(diff)) return { text: "Tarih Yok", bg: "var(--bg-hover)", color: "var(--text-muted)" };
     if (diff < 0) return { text: "Süresi Geçti", bg: isDarkMode ? '#42160d' : '#ffebe6', color: "#ff5630" };
-    
+
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    
+
     if (days > 0) return { text: `${days} gün kaldı`, bg: isDarkMode ? '#0d3323' : '#e3fcef', color: "#36b37e" };
     if (hours > 0) return { text: `${hours} saat kaldı`, bg: isDarkMode ? '#332700' : '#fff0b3', color: "#ffab00" };
     return { text: "1 saatten az", bg: isDarkMode ? '#332700' : '#fff0b3', color: "#ffab00" };
@@ -91,10 +91,9 @@ function App() {
 
   const parseTaskPriority = (fullTitle) => {
     if (!fullTitle) return { priority: "Orta", cleanTitle: "" };
-    
 
     const match = fullTitle.match(/^(Acil|Orta|Düşük)\s*\|\s*(.*)$/i);
-    
+
     if (match) {
       const priorityStr = match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase();
       return { priority: priorityStr, cleanTitle: match[2].trim() };
@@ -138,7 +137,7 @@ function App() {
     })
     .catch(err => console.error(err));
   }
-  
+
   const handleUserSubmit = (e) => {
     e.preventDefault();
     const newUser = { fullName: newUserName, email: newUserEmail, department: newUserDept };
@@ -166,7 +165,7 @@ function App() {
       toast.error("Lütfen önce bir ses veya video kaydı seçin.");
       return;
     }
-    
+
     setIsAnalyzing(true);
     setAnalyzedText(""); 
     const toastId = toast.loading("Ses kaydı analiz ediliyor, lütfen bekleyin...");
@@ -181,24 +180,24 @@ function App() {
     .then(res => res.json())
     .then(async (data) => {
       setAnalyzedText(data.tam_metin);
-      
+
       if (data.gorevler) {
         try {
           const cikarilanGorevler = JSON.parse(data.gorevler);
-          
+
           const newMeeting = { 
             title: `AI Analizi: ${audioFile.name}`, 
             date: new Date().toISOString().slice(0, 16) 
           };
-          
+
           const meetingRes = await fetch(`${API_BASE_URL}/api/meetings`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newMeeting)
           });
-          
+
           const createdMeeting = await meetingRes.json();
-          
+
           for (const gorev of cikarilanGorevler) {
             const newTask = {
               title: gorev.title,
@@ -206,7 +205,7 @@ function App() {
               meetingId: createdMeeting.id,
               assignedUserId: null 
             };
-            
+
             await fetch(`${API_BASE_URL}/api/tasks`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -217,14 +216,14 @@ function App() {
           console.error("Yapay zeka verisi ayrıştırılamadı:", error);
         }
       }
-      
+
       toast.update(toastId, { 
         render: "Analiz Başarılı! Yapay Zeka görevleri oluşturdu.", 
         type: "success", 
         isLoading: false, 
         autoClose: 3000 
       });
-      
+
       setIsAnalyzing(false);
       setAudioFile(null);
       fetchMeetings();
@@ -328,14 +327,16 @@ function App() {
   }
 
   const handleToggleStatus = (task) => {
-    const updatedStatus = task.status === "Yapılacak" ? "Tamamlandı" : "Yapılacak";
-    
+    const currentStatus = task.status || task.Status;
+    const updatedStatus = currentStatus === "Yapılacak" ? "Tamamlandı" : "Yapılacak";
+
     const updatedTask = {
       ...task,
-      status: updatedStatus
+      status: updatedStatus,
+      Status: updatedStatus
     };
 
-    fetch(`${API_BASE_URL}/api/tasks/${task.id}`, {
+    fetch(`${API_BASE_URL}/api/tasks/${task.id || task.Id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updatedTask)
@@ -347,24 +348,29 @@ function App() {
   }
 
   const handleStartEdit = (task) => {
-    const { priority, cleanTitle } = parseTaskPriority(task.title);
-    setEditingTaskId(task.id);
+    const fullTitle = task.title || task.Title;
+    const { priority, cleanTitle } = parseTaskPriority(fullTitle);
+    setEditingTaskId(task.id || task.Id);
     setEditingTaskTitle(cleanTitle); 
     setEditingTaskPriority(priority); 
-    setEditingTaskUserId(task.assignedUserId ? task.assignedUserId.toString() : ""); 
+    setEditingTaskUserId(task.assignedUserId || task.AssignedUserId ? (task.assignedUserId || task.AssignedUserId).toString() : ""); 
   }
 
   const handleSaveEdit = (task) => {
     if (!editingTaskTitle.trim()) return;
-    
+
     const selectedUserId = editingTaskUserId ? parseInt(editingTaskUserId) : null;
+    const newTitle = `${editingTaskPriority} | ${editingTaskTitle.trim()}`;
+
     const updatedTask = {
       ...task,
-      title: `${editingTaskPriority} | ${editingTaskTitle.trim()}`,
-      assignedUserId: selectedUserId
+      title: newTitle,
+      Title: newTitle,
+      assignedUserId: selectedUserId,
+      AssignedUserId: selectedUserId
     };
 
-    fetch(`${API_BASE_URL}/api/tasks/${task.id}`, {
+    fetch(`${API_BASE_URL}/api/tasks/${task.id || task.Id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updatedTask)
@@ -389,16 +395,17 @@ function App() {
 
   const totalMeetings = meetings.length;
   const totalTasks = meetings.reduce((acc, curr) => acc + (curr.tasks ? curr.tasks.length : 0), 0);
-  const completedTasks = meetings.reduce((acc, curr) => acc + (curr.tasks ? curr.tasks.filter(t => t.status === "Tamamlandı").length : 0), 0);
+  const completedTasks = meetings.reduce((acc, curr) => acc + (curr.tasks ? curr.tasks.filter(t => (t.status || t.Status) === "Tamamlandı").length : 0), 0);
   const pendingTasks = totalTasks - completedTasks;
 
-  const filteredMeetings = meetings.filter(meeting => 
-    meeting.title && meeting.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredMeetings = meetings.filter(meeting => {
+    const titleText = meeting.title || meeting.Title;
+    return titleText && titleText.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   return (
     <div className={isDarkMode ? 'dark-mode' : ''} style={{ padding: '30px 40px', fontFamily: "'Inter', 'Segoe UI', sans-serif", backgroundColor: 'var(--bg-body)', minHeight: '100vh', color: 'var(--text-normal)', transition: 'background-color 0.3s, color 0.3s', width: '100%' }}>
-      
+
       <style>
         {`
           #root {
@@ -493,7 +500,7 @@ function App() {
           .theme-toggle-btn.dark .toggle-thumb {
             transform: translateX(24px);
           }
-          
+
           .file-upload-label {
             display: flex;
             align-items: center;
@@ -515,12 +522,12 @@ function App() {
       </style>
 
       <div style={{ width: '100%', maxWidth: '1600px', margin: '0 auto' }}>
-        
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', marginBottom: '40px', minHeight: '50px' }}>
           <h1 style={{ margin: 0, color: 'var(--text-title)', fontWeight: '800', letterSpacing: '-0.5px' }}>
             MeetFlow
           </h1>
-          
+
           <div 
             className={`theme-toggle-btn ${isDarkMode ? 'dark' : 'light'}`} 
             onClick={() => setIsDarkMode(!isDarkMode)}
@@ -553,9 +560,9 @@ function App() {
           completedTasks={completedTasks} 
           pendingTasks={pendingTasks} 
         />
-        
+
         <div className="hide-item show-item" style={{ display: 'flex', gap: '30px', flexWrap: 'wrap', width: '100%', marginBottom: '50px' }}>
-          
+
           <ManualMeetingForm 
             handleSubmit={handleSubmit} 
             title={title} 
@@ -609,7 +616,7 @@ function App() {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid var(--border-light)', paddingBottom: '10px', marginBottom: '25px', flexWrap: 'wrap', gap: '15px', width: '100%' }}>
           <h2 style={{ color: 'var(--text-title)', margin: 0, fontSize: '1.4em', fontWeight: '700' }}>Sistemdeki Toplantılar</h2>
-          
+
           <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
             <input 
               type="text" 
@@ -636,7 +643,7 @@ function App() {
 
           </div>
         </div>
-        
+
         <MeetingList 
           filteredMeetings={filteredMeetings}
           filterUserId={filterUserId}
@@ -652,12 +659,12 @@ function App() {
           setEditingTaskId={setEditingTaskId}
           editingTaskTitle={editingTaskTitle}
           setEditingTaskTitle={setEditingTaskTitle}
-          
+
           editingTaskUserId={editingTaskUserId}
           setEditingTaskUserId={setEditingTaskUserId}
           editingTaskPriority={editingTaskPriority}
           setEditingTaskPriority={setEditingTaskPriority}
-          
+
           confirmDeleteMeeting={confirmDeleteMeeting}
           handleToggleStatus={handleToggleStatus}
           handleStartEdit={handleStartEdit}
@@ -689,7 +696,7 @@ function App() {
         )}
 
       </div>
-      
+
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover theme={isDarkMode ? "dark" : "colored"} />
     </div>
   )
