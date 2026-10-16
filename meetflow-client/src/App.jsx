@@ -631,7 +631,7 @@ function App() {
               onChange={(e) => setFilterUserId(e.target.value)}
               style={{ padding: '8px 16px', border: '1px solid var(--border-light)', borderRadius: '20px', outline: 'none', backgroundColor: 'var(--bg-card)', cursor: 'pointer', fontSize: '0.9em', fontWeight: '600' }}
             >
-              <option value="">Tüm Görevleri Göster</option>
+              <option value="">Tüm Kullanıcıları Göster</option>
               {users.map(user => (
                 <option key={user.id} value={user.id}>{user.fullName} Görevleri</option>
               ))}
