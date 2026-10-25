@@ -9,6 +9,7 @@ export default function MeetingList({
   getCountdown, parseTaskPriority, getPriorityStyles, getUserName
 }) {
   const [expandedMeetings, setExpandedMeetings] = useState({});
+  const [showTextFor, setShowTextFor] = useState(null);
 
   const toggleExpand = (meetingId) => {
     setExpandedMeetings(prev => ({
@@ -45,8 +46,8 @@ export default function MeetingList({
           return (
             <li key={meeting.id} className="hide-item show-item" style={{ backgroundColor: 'var(--bg-card)', padding: '30px', borderRadius: '16px', border: '1px solid var(--border-light)', boxShadow: '0 4px 15px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', height: '100%' }}>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
-                <div style={{ width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px', flexWrap: 'wrap', gap: '15px' }}>
+                <div style={{ flex: '1', minWidth: '200px' }}>
                   <strong style={{ fontSize: '1.3em', color: 'var(--text-title)', fontWeight: '700', letterSpacing: '-0.3px', display: 'block', marginBottom: '8px' }}>{meeting.title}</strong>
 
                   <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', gap: '10px' }}>
@@ -66,12 +67,28 @@ export default function MeetingList({
                   </div>
                 </div>
 
-                <button 
-                  onClick={() => confirmDeleteMeeting(meeting.id)}
-                  style={{ backgroundColor: '#ff5630', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 14px', cursor: 'pointer', fontSize: '0.85em', fontWeight: '700', marginLeft: '20px', whiteSpace: 'nowrap' }}>
-                  Toplantıyı Sil
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  {meeting.title.includes("AI Analizi") && (
+                    <button 
+                      onClick={() => setShowTextFor(showTextFor === meeting.id ? null : meeting.id)}
+                      style={{ backgroundColor: 'transparent', color: '#0052cc', border: '1px solid #0052cc', borderRadius: '8px', padding: '8px 14px', cursor: 'pointer', fontSize: '0.85em', fontWeight: '700', whiteSpace: 'nowrap' }}>
+                      {showTextFor === meeting.id ? 'Metni Gizle' : 'Metni Görüntüle'}
+                    </button>
+                  )}
+                  <button 
+                    onClick={() => confirmDeleteMeeting(meeting.id)}
+                    style={{ backgroundColor: '#ff5630', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 14px', cursor: 'pointer', fontSize: '0.85em', fontWeight: '700', whiteSpace: 'nowrap' }}>
+                    Toplantıyı Sil
+                  </button>
+                </div>
               </div>
+
+              {showTextFor === meeting.id && (
+                <div style={{ backgroundColor: 'var(--bg-input)', padding: '15px', borderRadius: '8px', marginBottom: '20px', border: '1px dashed var(--border-light)', color: 'var(--text-normal)', fontSize: '0.9em', lineHeight: '1.6' }}>
+                  <strong style={{ color: '#0052cc', display: 'block', marginBottom: '5px' }}>🎙️ Analiz Edilen Metin</strong>
+                  Şu anki veritabanı yapımızda ses analiz metinleri tabloya kaydedilmiyor (sadece başlık ve oluşan görevler kaydediliyor). C# Backend aşamasına geçtiğimizde "Meeting" tablomuza bir metin kolonu ekleyerek bu kısmı kalıcı verilerle dolduracağız! 🚀
+                </div>
+              )}
 
               <div style={{ marginTop: '10px', flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <h4 style={{ margin: '0 0 15px 0', fontSize: '0.85em', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>

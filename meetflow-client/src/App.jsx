@@ -385,16 +385,11 @@ function App() {
             transition: all 0.3s ease;
           }
           
-          input[type="date"], input[type="time"], input[type="datetime-local"] {
-            color-scheme: light;
-          }
-          
-          .dark-mode input[type="date"], .dark-mode input[type="time"], .dark-mode input[type="datetime-local"] {
-            color-scheme: dark;
-          }
-
-          .dark-mode input[type="date"]::-webkit-calendar-picker-indicator {
-            filter: invert(0.8);
+          input[type="date"]::-webkit-calendar-picker-indicator,
+          input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            filter: invert(27%) sepia(82%) saturate(2365%) hue-rotate(204deg) brightness(96%) contrast(101%) !important;
+            cursor: pointer;
+            opacity: 1;
           }
 
           input:focus, select:focus { 
