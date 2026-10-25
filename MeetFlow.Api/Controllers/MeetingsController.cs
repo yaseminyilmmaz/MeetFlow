@@ -2,6 +2,7 @@ using MeetFlow.Api.Data;
 using MeetFlow.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace MeetFlow.Api.Controllers
 {
@@ -19,7 +20,6 @@ namespace MeetFlow.Api.Controllers
         [HttpGet]
         public IActionResult GetMeetings()
         {
-
             var meetings = _context.Meetings.Include(m => m.Tasks).ToList();
             return Ok(meetings);
         }
@@ -31,6 +31,28 @@ namespace MeetFlow.Api.Controllers
             _context.SaveChanges();
 
             return Ok(newMeeting);
+        }
+
+        [HttpPut("{id}")]
+        public IActionResult UpdateMeeting(int id, Meeting updatedMeeting)
+        {
+            if (id != updatedMeeting.Id)
+            {
+                return BadRequest();
+            }
+
+            var meeting = _context.Meetings.Find(id);
+            if (meeting == null)
+            {
+                return NotFound();
+            }
+
+            meeting.Title = updatedMeeting.Title;
+            meeting.Date = updatedMeeting.Date;
+
+            _context.SaveChanges();
+
+            return NoContent();
         }
 
         [HttpDelete("{id}")]
