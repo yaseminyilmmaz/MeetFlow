@@ -1,22 +1,49 @@
+import { CalendarDays, ListTodo, CheckCircle2, Clock } from 'lucide-react';
+
 export default function DashboardStats({ totalMeetings, totalTasks, completedTasks, pendingTasks }) {
   return (
-    <div className="hide-item show-item" style={{ display: 'flex', gap: '20px', marginBottom: '40px', flexWrap: 'wrap', width: '100%' }}>
-      <div style={{ flex: 1, backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 5px rgba(0,0,0,0.05)', borderLeft: '5px solid #0052cc', minWidth: '200px' }}>
-        <h4 style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.85em', textTransform: 'uppercase' }}>Toplam Toplantı</h4>
-        <span style={{ fontSize: '2em', fontWeight: '700', color: 'var(--text-title)' }}>{totalMeetings}</span>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '40px', width: '100%' }}>
+      
+      <div className="hide-item show-item" style={{ backgroundColor: 'var(--bg-card)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: '20px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', transition: 'transform 0.2s', cursor: 'default' }} onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-5px)'} onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
+        <div style={{ backgroundColor: 'rgba(0, 82, 204, 0.1)', color: '#0052cc', padding: '16px', borderRadius: '12px', display: 'flex' }}>
+          <CalendarDays size={28} />
+        </div>
+        <div>
+          <div style={{ fontSize: '0.85em', color: 'var(--text-muted)', fontWeight: '700', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '4px' }}>Toplam Toplantı</div>
+          <div style={{ fontSize: '2em', fontWeight: '800', color: 'var(--text-title)' }}>{totalMeetings}</div>
+        </div>
       </div>
-      <div style={{ flex: 1, backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 5px rgba(0,0,0,0.05)', borderLeft: '5px solid #6554c0', minWidth: '200px' }}>
-        <h4 style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.85em', textTransform: 'uppercase' }}>Toplam Görev</h4>
-        <span style={{ fontSize: '2em', fontWeight: '700', color: 'var(--text-title)' }}>{totalTasks}</span>
+
+      <div className="hide-item show-item" style={{ backgroundColor: 'var(--bg-card)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: '20px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', transition: 'transform 0.2s', cursor: 'default' }} onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-5px)'} onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
+        <div style={{ backgroundColor: 'rgba(101, 84, 192, 0.1)', color: '#6554c0', padding: '16px', borderRadius: '12px', display: 'flex' }}>
+          <ListTodo size={28} />
+        </div>
+        <div>
+          <div style={{ fontSize: '0.85em', color: 'var(--text-muted)', fontWeight: '700', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '4px' }}>Toplam Görev</div>
+          <div style={{ fontSize: '2em', fontWeight: '800', color: 'var(--text-title)' }}>{totalTasks}</div>
+        </div>
       </div>
-      <div style={{ flex: 1, backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 5px rgba(0,0,0,0.05)', borderLeft: '5px solid #36b37e', minWidth: '200px' }}>
-        <h4 style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.85em', textTransform: 'uppercase' }}>Tamamlanan</h4>
-        <span style={{ fontSize: '2em', fontWeight: '700', color: 'var(--text-title)' }}>{completedTasks}</span>
+
+      <div className="hide-item show-item" style={{ backgroundColor: 'var(--bg-card)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: '20px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', transition: 'transform 0.2s', cursor: 'default' }} onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-5px)'} onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
+        <div style={{ backgroundColor: 'rgba(54, 179, 126, 0.1)', color: '#36b37e', padding: '16px', borderRadius: '12px', display: 'flex' }}>
+          <CheckCircle2 size={28} />
+        </div>
+        <div>
+          <div style={{ fontSize: '0.85em', color: 'var(--text-muted)', fontWeight: '700', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '4px' }}>Tamamlanan</div>
+          <div style={{ fontSize: '2em', fontWeight: '800', color: 'var(--text-title)' }}>{completedTasks}</div>
+        </div>
       </div>
-      <div style={{ flex: 1, backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 5px rgba(0,0,0,0.05)', borderLeft: '5px solid #ff5630', minWidth: '200px' }}>
-        <h4 style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.85em', textTransform: 'uppercase' }}>Bekleyen Görev</h4>
-        <span style={{ fontSize: '2em', fontWeight: '700', color: 'var(--text-title)' }}>{pendingTasks}</span>
+
+      <div className="hide-item show-item" style={{ backgroundColor: 'var(--bg-card)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: '20px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', transition: 'transform 0.2s', cursor: 'default' }} onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-5px)'} onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
+        <div style={{ backgroundColor: 'rgba(255, 171, 0, 0.1)', color: '#ffab00', padding: '16px', borderRadius: '12px', display: 'flex' }}>
+          <Clock size={28} />
+        </div>
+        <div>
+          <div style={{ fontSize: '0.85em', color: 'var(--text-muted)', fontWeight: '700', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '4px' }}>Bekleyen Görev</div>
+          <div style={{ fontSize: '2em', fontWeight: '800', color: 'var(--text-title)' }}>{pendingTasks}</div>
+        </div>
       </div>
+
     </div>
   );
 }
