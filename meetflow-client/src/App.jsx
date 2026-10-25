@@ -344,82 +344,63 @@ function App() {
     <>
       <style>
         {`
-          #root {
-            max-width: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            width: 100%;
-          }
-          body {
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
-            width: 100%;
-            font-family: 'Inter', 'Segoe UI', sans-serif;
-          }
-          * {
-            box-sizing: border-box;
-            word-wrap: break-word;
-            overflow-wrap: anywhere;
-          }
-          :root {
-            --bg-body: #f4f5f7;
-            --bg-card: #ffffff;
-            --text-title: #091e42;
-            --text-normal: #172b4d;
-            --text-muted: #5e6c84;
-            --border-light: #dfe1e6;
-            --bg-input: #fafbfc;
-            --bg-hover: #ebecf0;
-          }
-          .dark-mode {
-            --bg-body: #12151a;
-            --bg-card: #1c212b;
-            --text-title: #ffffff;
-            --text-normal: #d7dbe3;
-            --text-muted: #8b99af;
-            --border-light: #2d3545;
-            --bg-input: #12151a;
-            --bg-hover: #262c38;
-          }
-          .hide-item {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-          }
-          .show-item {
-            opacity: 1;
-            transform: translateY(0);
-          }
-          .btn-primary:hover { background-color: #0052cc !important; }
-          .btn-success:hover { background-color: #218838 !important; }
-          .btn-danger:hover { background-color: #c82333 !important; }
-          .btn-warning:hover { background-color: #e06b00 !important; }
-          input, select { color: var(--text-normal); }
-          input:focus, select:focus { border-color: #4c9aff !important; box-shadow: 0 0 0 2px rgba(76, 154, 255, 0.2) !important; }
+          @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+          #root { max-width: 100% !important; margin: 0 !important; padding: 0 !important; width: 100%; }
+          body { margin: 0; padding: 0; overflow-x: hidden; width: 100%; font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-body); }
+          * { box-sizing: border-box; word-wrap: break-word; overflow-wrap: anywhere; }
           
-          .theme-toggle-btn {
-            transition: background-color 0.4s ease, border 0.4s ease;
-            user-select: none;
+          :root {
+            --bg-body: #f8f9fa;
+            --bg-card: #ffffff;
+            --text-title: #0f172a;
+            --text-normal: #334155;
+            --text-muted: #64748b;
+            --border-light: #e2e8f0;
+            --bg-input: #f8fafc;
+            --bg-hover: #f1f5f9;
           }
+          
+          .dark-mode {
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --text-title: #f8fafc;
+            --text-normal: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-light: #334155;
+            --bg-input: #0f172a;
+            --bg-hover: #334155;
+          }
+
+          .hide-item { opacity: 0; transform: translateY(20px); transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+          .show-item { opacity: 1; transform: translateY(0); }
+          
+          button { font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.3s ease !important; }
+          button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+          button:active { transform: translateY(0); }
+          
+          input, select { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            color: var(--text-normal); 
+            transition: all 0.3s ease;
+          }
+          input:focus, select:focus { 
+            border-color: #0052cc !important; 
+            box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.15) !important; 
+            background-color: var(--bg-card) !important;
+          }
+          
+          .theme-toggle-btn { transition: background-color 0.4s ease, border 0.4s ease; user-select: none; }
           .theme-toggle-btn.light { background-color: #f1f3f5; border: 1px solid #e9ecef; }
           .theme-toggle-btn.dark { background-color: #1a1e23; border: 1px solid #2d3545; }
           
           .file-upload-label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 14px;
-            border: 2px dashed #6554c0;
-            border-radius: 6px;
-            background-color: rgba(101, 84, 192, 0.05);
-            color: #6554c0;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            padding: 16px; border: 2px dashed #6554c0; border-radius: 12px;
+            background-color: rgba(101, 84, 192, 0.05); color: #6554c0; cursor: pointer;
+            font-weight: 700; transition: all 0.3s ease;
           }
-          .file-upload-label:hover { background-color: rgba(101, 84, 192, 0.1); }
+          .file-upload-label:hover { background-color: rgba(101, 84, 192, 0.1); transform: translateY(-2px); }
         `}
       </style>
 
