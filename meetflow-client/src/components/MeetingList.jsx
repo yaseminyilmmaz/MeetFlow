@@ -34,7 +34,6 @@ export default function MeetingList({
           else if (progressPercentage > 50) progressColor = '#ffab00';
 
           const countdown = getCountdown(meeting.date);
-
           const filteredTasks = meeting.tasks && meeting.tasks.length > 0 
             ? meeting.tasks.filter(task => filterUserId === "" || task.assignedUserId === parseInt(filterUserId) || task.AssignedUserId === parseInt(filterUserId))
             : [];
@@ -44,22 +43,22 @@ export default function MeetingList({
           const hasMoreTasks = filteredTasks.length > 1;
 
           return (
-            <li key={meeting.id} className="hide-item show-item" style={{ backgroundColor: 'var(--bg-card)', padding: '30px', borderRadius: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <li key={meeting.id} className="hide-item show-item" style={{ backgroundColor: 'var(--bg-card)', padding: '30px', borderRadius: '16px', border: '1px solid var(--border-light)', boxShadow: '0 4px 15px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', height: '100%' }}>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
                 <div style={{ width: '100%' }}>
-                  <strong style={{ fontSize: '1.3em', color: 'var(--text-title)', fontWeight: '700', letterSpacing: '-0.3px', display: 'block', marginBottom: '5px' }}>{meeting.title}</strong>
+                  <strong style={{ fontSize: '1.3em', color: 'var(--text-title)', fontWeight: '700', letterSpacing: '-0.3px', display: 'block', marginBottom: '8px' }}>{meeting.title}</strong>
 
-                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '15px', gap: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', gap: '10px' }}>
                     <span style={{ color: 'var(--text-muted)', fontSize: '0.85em', fontWeight: '600' }}>
                       {new Date(meeting.date).toLocaleString('tr-TR')}
                     </span>
-                    <span style={{ backgroundColor: countdown.bg, color: countdown.color, padding: '3px 8px', borderRadius: '12px', fontSize: '0.75em', fontWeight: '700' }}>
+                    <span style={{ backgroundColor: countdown.bg, color: countdown.color, padding: '4px 10px', borderRadius: '12px', fontSize: '0.75em', fontWeight: '700' }}>
                       {countdown.text}
                     </span>
                   </div>
 
-                  <div style={{ width: '100%', backgroundColor: 'var(--bg-hover)', borderRadius: '8px', height: '10px', marginBottom: '5px', overflow: 'hidden' }}>
+                  <div style={{ width: '100%', backgroundColor: 'var(--bg-hover)', borderRadius: '8px', height: '10px', marginBottom: '8px', overflow: 'hidden' }}>
                     <div style={{ width: `${progressPercentage}%`, backgroundColor: progressColor, height: '100%', transition: 'width 0.5s ease-in-out, background-color 0.3s' }}></div>
                   </div>
                   <div style={{ fontSize: '0.8em', color: 'var(--text-muted)', fontWeight: '600', textAlign: 'right' }}>
@@ -68,15 +67,14 @@ export default function MeetingList({
                 </div>
 
                 <button 
-                  className="btn-danger"
                   onClick={() => confirmDeleteMeeting(meeting.id)}
-                  style={{ backgroundColor: '#ff5630', color: 'white', border: 'none', borderRadius: '4px', padding: '6px 12px', cursor: 'pointer', fontSize: '0.85em', fontWeight: '600', transition: '0.2s', marginLeft: '20px', whiteSpace: 'nowrap' }}>
+                  style={{ backgroundColor: '#ff5630', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 14px', cursor: 'pointer', fontSize: '0.85em', fontWeight: '700', marginLeft: '20px', whiteSpace: 'nowrap' }}>
                   Toplantıyı Sil
                 </button>
               </div>
 
-              <div style={{ marginTop: '20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <h4 style={{ margin: '0 0 15px 0', fontSize: '0.9em', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <div style={{ marginTop: '10px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <h4 style={{ margin: '0 0 15px 0', fontSize: '0.85em', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Alt Görevler
                 </h4>
 
@@ -90,101 +88,52 @@ export default function MeetingList({
                       const styles = getPriorityStyles(priority, taskStatus);
 
                       return (
-                        <li key={task.id || task.Id} style={{ display: 'flex', alignItems: 'center', padding: '12px 15px', border: '1px solid var(--border-light)', borderLeft: `5px solid ${styles.borderColor}`, borderRadius: '6px', marginBottom: '8px', backgroundColor: taskStatus === "Tamamlandı" ? 'var(--bg-hover)' : 'var(--bg-card)', transition: '0.2s', flexWrap: 'wrap', gap: '10px' }}>
+                        <li key={task.id || task.Id} style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px', border: '1px solid var(--border-light)', borderLeft: `5px solid ${styles.borderColor}`, borderRadius: '10px', marginBottom: '12px', backgroundColor: taskStatus === "Tamamlandı" ? 'var(--bg-hover)' : 'var(--bg-card)', transition: '0.2s' }}>
 
-                          <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: '200px' }}>
-                            <input 
-                              type="checkbox" 
-                              checked={taskStatus === "Tamamlandı"}
-                              onChange={() => handleToggleStatus(task)}
-                              style={{ marginRight: '15px', cursor: 'pointer', width: '16px', height: '16px', accentColor: '#0052cc' }}
-                            />
-
-                            {editingTaskId === (task.id || task.Id) ? (
-                              <div style={{ display: 'flex', flex: 1, gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-
-                                <select 
-                                  value={editingTaskPriority} 
-                                  onChange={(e) => setEditingTaskPriority(e.target.value)}
-                                  style={{ padding: '4px 8px', border: '1px solid #0052cc', borderRadius: '4px', outline: 'none', backgroundColor: 'var(--bg-input)', fontSize: '0.85em', fontWeight: '600', cursor: 'pointer' }}
-                                >
+                          {editingTaskId === (task.id || task.Id) ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                <select value={editingTaskPriority} onChange={(e) => setEditingTaskPriority(e.target.value)} style={{ padding: '8px', border: '1px solid #0052cc', borderRadius: '6px', outline: 'none', backgroundColor: 'var(--bg-input)', fontSize: '0.85em', fontWeight: '600' }}>
                                   <option value="Acil">Acil</option>
                                   <option value="Orta">Orta</option>
                                   <option value="Düşük">Düşük</option>
                                 </select>
-
-                                <input 
-                                  type="text" 
-                                  value={editingTaskTitle}
-                                  onChange={(e) => setEditingTaskTitle(e.target.value)}
-                                  style={{ padding: '4px 8px', flex: '2 1 150px', border: '1px solid #0052cc', borderRadius: '4px', outline: 'none', backgroundColor: 'var(--bg-input)' }}
-                                />
-
-                                <select 
-                                  value={editingTaskUserId} 
-                                  onChange={(e) => setEditingTaskUserId(e.target.value)}
-                                  style={{ padding: '4px 8px', flex: '1 1 120px', border: '1px solid #0052cc', borderRadius: '4px', outline: 'none', backgroundColor: 'var(--bg-input)', fontSize: '0.85em', fontWeight: '600', cursor: 'pointer' }}
-                                >
+                                <input type="text" value={editingTaskTitle} onChange={(e) => setEditingTaskTitle(e.target.value)} style={{ padding: '8px', flex: '1 1 150px', border: '1px solid #0052cc', borderRadius: '6px', outline: 'none', backgroundColor: 'var(--bg-input)' }} />
+                                <select value={editingTaskUserId} onChange={(e) => setEditingTaskUserId(e.target.value)} style={{ padding: '8px', flex: '1 1 120px', border: '1px solid #0052cc', borderRadius: '6px', outline: 'none', backgroundColor: 'var(--bg-input)', fontSize: '0.85em', fontWeight: '600' }}>
                                   <option value="">Atama Yap</option>
                                   {users.map(user => (
                                     <option key={user.id} value={user.id}>{user.fullName}</option>
                                   ))}
                                 </select>
-
-                                <button 
-                                  onClick={() => handleSaveEdit(task)}
-                                  style={{ backgroundColor: '#36b37e', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8em', fontWeight: '600' }}>
-                                  Kaydet
-                                </button>
-                                <button 
-                                  onClick={() => setEditingTaskId(null)}
-                                  style={{ backgroundColor: '#ebecf0', color: '#42526e', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8em', fontWeight: '600' }}>
-                                  İptal
-                                </button>
                               </div>
-                            ) : (
-                              <span style={{ 
-                                flex: 1, 
-                                textDecoration: taskStatus === "Tamamlandı" ? 'line-through' : 'none',
-                                color: taskStatus === "Tamamlandı" ? 'var(--text-muted)' : 'var(--text-normal)',
-                                fontSize: '0.95em',
-                                fontWeight: '500'
-                              }}>
-                                {cleanTitle}
-                              </span> 
-                            )}
-                          </div>
-
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                            {taskStatus !== "Tamamlandı" && (
-                              <span style={{ fontSize: '0.75em', backgroundColor: styles.tagBg, color: styles.tagColor, padding: '4px 8px', borderRadius: '4px', fontWeight: '700' }}>
-                                {priority}
-                              </span>
-                            )}
-
-                            <span style={{ fontSize: '0.8em', backgroundColor: '#e3fcef', color: '#006644', padding: '4px 10px', borderRadius: '3px', fontWeight: '600' }}>
-                              {getUserName(assignedUser)}
-                            </span>
-
-                            <span style={{ fontSize: '0.8em', backgroundColor: taskStatus === "Tamamlandı" ? '#eae6ff' : '#ffebe6', color: taskStatus === "Tamamlandı" ? '#403294' : '#bf2600', padding: '4px 10px', borderRadius: '3px', fontWeight: '600' }}>
-                              {taskStatus}
-                            </span>
-
-                            {editingTaskId !== (task.id || task.Id) && (
-                              <button 
-                                onClick={() => handleStartEdit(task)}
-                                style={{ backgroundColor: '#ffab00', color: 'white', border: 'none', borderRadius: '4px', padding: '5px 10px', cursor: 'pointer', fontSize: '0.8em', fontWeight: '600', transition: '0.2s' }}>
-                                Düzenle
-                              </button>
-                            )}
-
-                            <button 
-                              className="btn-danger"
-                              onClick={() => handleDeleteTask(task.id || task.Id)}
-                              style={{ backgroundColor: '#ff5630', color: 'white', border: 'none', borderRadius: '4px', padding: '5px 10px', cursor: 'pointer', fontSize: '0.8em', fontWeight: '600', transition: '0.2s' }}>
-                              Sil
-                            </button>
-                          </div>
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                                <button onClick={() => handleSaveEdit(task)} style={{ backgroundColor: '#36b37e', color: 'white', border: 'none', padding: '6px 14px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85em', fontWeight: '700' }}>Kaydet</button>
+                                <button onClick={() => setEditingTaskId(null)} style={{ backgroundColor: '#ebecf0', color: '#42526e', border: 'none', padding: '6px 14px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85em', fontWeight: '700' }}>İptal</button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '15px' }}>
+                                <div style={{ display: 'flex', alignItems: 'flex-start', flex: 1, gap: '12px' }}>
+                                  <input type="checkbox" checked={taskStatus === "Tamamlandı"} onChange={() => handleToggleStatus(task)} style={{ marginTop: '4px', cursor: 'pointer', width: '18px', height: '18px', accentColor: '#0052cc' }} />
+                                  <span style={{ textDecoration: taskStatus === "Tamamlandı" ? 'line-through' : 'none', color: taskStatus === "Tamamlandı" ? 'var(--text-muted)' : 'var(--text-normal)', fontSize: '0.95em', fontWeight: '600', lineHeight: '1.4' }}>
+                                    {cleanTitle}
+                                  </span> 
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                                  <button onClick={() => handleStartEdit(task)} style={{ backgroundColor: 'transparent', color: '#0052cc', border: '1px solid #0052cc', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontSize: '0.75em', fontWeight: '700' }}>Düzenle</button>
+                                  <button onClick={() => handleDeleteTask(task.id || task.Id)} style={{ backgroundColor: 'transparent', color: '#ff5630', border: '1px solid #ff5630', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontSize: '0.75em', fontWeight: '700' }}>Sil</button>
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', paddingLeft: '30px' }}>
+                                {taskStatus !== "Tamamlandı" && (
+                                  <span style={{ fontSize: '0.75em', backgroundColor: styles.tagBg, color: styles.tagColor, padding: '4px 10px', borderRadius: '6px', fontWeight: '700' }}>{priority}</span>
+                                )}
+                                <span style={{ fontSize: '0.75em', backgroundColor: '#e3fcef', color: '#006644', padding: '4px 10px', borderRadius: '6px', fontWeight: '600' }}>👤 {getUserName(assignedUser)}</span>
+                                <span style={{ fontSize: '0.75em', backgroundColor: taskStatus === "Tamamlandı" ? '#eae6ff' : '#ffebe6', color: taskStatus === "Tamamlandı" ? '#403294' : '#bf2600', padding: '4px 10px', borderRadius: '6px', fontWeight: '600' }}>{taskStatus}</span>
+                              </div>
+                            </>
+                          )}
                         </li>
                       );
                     })
@@ -197,49 +146,27 @@ export default function MeetingList({
                   <div style={{ textAlign: 'center', marginBottom: '20px', marginTop: 'auto' }}>
                     <button 
                       onClick={() => toggleExpand(meeting.id)}
-                      style={{ background: 'none', border: 'none', color: '#0052cc', cursor: 'pointer', fontWeight: '700', fontSize: '0.85em', transition: 'color 0.2s' }}
-                      onMouseOver={(e) => e.target.style.color = '#003d99'}
-                      onMouseOut={(e) => e.target.style.color = '#0052cc'}
+                      style={{ background: 'none', border: 'none', color: '#0052cc', cursor: 'pointer', fontWeight: '700', fontSize: '0.85em' }}
                     >
                       {isExpanded ? 'Daralt ▲' : `Tüm Görevleri Göster (${filteredTasks.length}) ▼`}
                     </button>
                   </div>
                 )}
 
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: hasMoreTasks ? '0' : 'auto' }}>
-                  <select 
-                    value={taskPriorities[meeting.id] || "Orta"} 
-                    onChange={(e) => setTaskPriorities({...taskPriorities, [meeting.id]: e.target.value})}
-                    style={{ padding: '10px 8px', flex: '1 1 100px', border: '2px solid var(--border-light)', borderRadius: '6px', outline: 'none', backgroundColor: 'var(--bg-input)', cursor: 'pointer', fontWeight: '600' }}
-                  >
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: hasMoreTasks ? '0' : 'auto', backgroundColor: 'var(--bg-input)', padding: '15px', borderRadius: '10px', border: '1px solid var(--border-light)' }}>
+                  <select value={taskPriorities[meeting.id] || "Orta"} onChange={(e) => setTaskPriorities({...taskPriorities, [meeting.id]: e.target.value})} style={{ padding: '10px', flex: '1 1 90px', border: '1px solid var(--border-light)', borderRadius: '6px', outline: 'none', backgroundColor: 'var(--bg-card)', fontWeight: '600' }}>
                     <option value="Acil">Acil</option>
                     <option value="Orta">Orta</option>
                     <option value="Düşük">Düşük</option>
                   </select>
-
-                  <input 
-                    type="text" 
-                    placeholder="Görevi buraya yazın..." 
-                    value={taskInputs[meeting.id] || ""} 
-                    onChange={(e) => setTaskInputs({...taskInputs, [meeting.id]: e.target.value})}
-                    style={{ padding: '10px 14px', flex: '3 1 200px', border: '2px solid var(--border-light)', borderRadius: '6px', outline: 'none', backgroundColor: 'var(--bg-input)', transition: '0.2s' }}
-                  />
-                  <select 
-                    value={taskUsers[meeting.id] || ""} 
-                    onChange={(e) => setTaskUsers({...taskUsers, [meeting.id]: e.target.value})}
-                    style={{ padding: '10px 14px', flex: '1 1 120px', border: '2px solid var(--border-light)', borderRadius: '6px', outline: 'none', backgroundColor: 'var(--bg-input)', transition: '0.2s', cursor: 'pointer' }}
-                  >
+                  <input type="text" placeholder="Görevi buraya yazın..." value={taskInputs[meeting.id] || ""} onChange={(e) => setTaskInputs({...taskInputs, [meeting.id]: e.target.value})} style={{ padding: '10px', flex: '3 1 180px', border: '1px solid var(--border-light)', borderRadius: '6px', outline: 'none', backgroundColor: 'var(--bg-card)' }} />
+                  <select value={taskUsers[meeting.id] || ""} onChange={(e) => setTaskUsers({...taskUsers, [meeting.id]: e.target.value})} style={{ padding: '10px', flex: '1 1 120px', border: '1px solid var(--border-light)', borderRadius: '6px', outline: 'none', backgroundColor: 'var(--bg-card)', fontWeight: '600' }}>
                     <option value="">Atama Yap</option>
                     {users.map(user => (
                       <option key={user.id} value={user.id}>{user.fullName}</option>
                     ))}
                   </select>
-                  <button 
-                    className="btn-success"
-                    onClick={() => handleAddTask(meeting.id)}
-                    style={{ padding: '10px 24px', backgroundColor: '#36b37e', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', transition: '0.2s', flex: '1 1 80px' }}>
-                    Ekle
-                  </button>
+                  <button onClick={() => handleAddTask(meeting.id)} style={{ padding: '10px 20px', backgroundColor: '#36b37e', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '700', flex: '1 1 80px' }}>Ekle</button>
                 </div>
               </div>
             </li>

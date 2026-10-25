@@ -29,6 +29,8 @@ export default function Sidebar() {
           fontWeight: '800', 
           fontSize: '1.8em', 
           letterSpacing: '-1px',
+          lineHeight: '1.2',
+          paddingBottom: '4px',
           background: 'linear-gradient(90deg, #091e42 0%, #0052cc 100%)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent'
