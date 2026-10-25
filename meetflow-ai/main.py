@@ -29,11 +29,12 @@ gemini_api_key = os.getenv("GEMINI_API_KEY")
 client = genai.Client(api_key=gemini_api_key) if gemini_api_key else None
 
 PROMPT = """
-Bu toplantı ses/video kaydını dinle.
-SADECE GEÇERLİ BİR JSON ÇIKTISI VER. BAŞKA HİÇBİR YORUM YAZMA.
-Format:
+Bu toplantı ses/video kaydını dinle ve özetle.
+SADECE GEÇERLİ BİR JSON OBJESİ ÇIKTISI VER. KESİNLİKLE LİSTE ([]) DÖNME. BAŞKA HİÇBİR YORUM YAZMA.
+
+Zorunlu JSON Formatı (Aşağıdaki anahtarlar kesinlikle olmalıdır):
 {
-  "tam_metin": "konuşma metni buraya",
+  "tam_metin": "Konuşmada geçen detaylı metnin özeti veya dökümü.",
   "gorevler": [
     {"title": "Acil | Görev 1"},
     {"title": "Orta | Görev 2"}
@@ -152,13 +153,13 @@ async def analyze_audio(file: UploadFile = File(...)):
             result_data = json.loads(clean_text)
 
         if isinstance(result_data, dict):
-            transcript = result_data.get("tam_metin", "Metin bulunamadı.")
+            transcript = result_data.get("tam_metin", "Analiz metni bulunamadı.")
             raw_gorevler = result_data.get("gorevler", [])
         elif isinstance(result_data, list):
-            transcript = "Ses kaydı analiz edildi."
+            transcript = "Yapay zeka metin özeti yerine sadece görev listesi döndürdü."
             raw_gorevler = result_data
         else:
-            transcript = "Metin bulunamadı."
+            transcript = "Analiz çözümlenemedi."
             raw_gorevler = []
 
         gorevler = json.dumps(raw_gorevler, ensure_ascii=False)
