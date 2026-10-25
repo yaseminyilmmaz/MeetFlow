@@ -164,7 +164,8 @@ function App() {
           const cikarilanGorevler = JSON.parse(data.gorevler);
           const newMeeting = { 
             title: `AI Analizi: ${audioFile.name}`, 
-            date: new Date().toISOString().slice(0, 16) 
+            date: new Date().toISOString().slice(0, 16),
+            transcription: data.tam_metin
           };
           const meetingRes = await fetch(`${API_BASE_URL}/api/meetings`, {
             method: 'POST',
@@ -230,7 +231,6 @@ function App() {
   const handleStartEditMeeting = (meeting) => {
     setEditingMeetingId(meeting.id);
     setEditingMeetingTitle(meeting.title || meeting.Title);
-    
     let formattedDate = "";
     if (meeting.date) {
       const d = new Date(meeting.date);
@@ -246,13 +246,11 @@ function App() {
       toast.error("Başlık ve tarih boş bırakılamaz.");
       return;
     }
-
     const updatedMeeting = {
       id: meetingId,
       title: editingMeetingTitle.trim(),
       date: editingMeetingDate
     };
-
     fetch(`${API_BASE_URL}/api/meetings/${meetingId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },

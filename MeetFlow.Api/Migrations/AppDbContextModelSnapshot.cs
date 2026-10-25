@@ -33,12 +33,11 @@ namespace MeetFlow.Api.Migrations
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Summary")
+                    b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Title")
-                        .IsRequired()
+                    b.Property<string>("Transcription")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");

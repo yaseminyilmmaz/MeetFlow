@@ -1,13 +1,16 @@
+using System;
+using System.Collections.Generic;
+
 namespace MeetFlow.Api.Models
 {
     public class Meeting
     {
         public int Id { get; set; }
+        public string Title { get; set; }
+        public DateTime Date { get; set; }
 
-        public string Title { get; set; } = string.Empty;
-        public DateTime Date { get; set; } = DateTime.Now;
-        public string Summary { get; set; } = string.Empty;
+        public string? Transcription { get; set; }
 
-        public ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>();
+        public List<TaskItem> Tasks { get; set; } = new List<TaskItem>();
     }
 }
