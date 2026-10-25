@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
+import { Sun, Moon } from 'lucide-react';
 
 export default function MainLayout(props) {
   const { isDarkMode, setIsDarkMode } = props;
@@ -11,13 +12,12 @@ export default function MainLayout(props) {
         
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '30px' }}>
           <div 
-            className={`theme-toggle-btn ${isDarkMode ? 'dark' : 'light'}`} 
             onClick={() => setIsDarkMode(!isDarkMode)}
-            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}
+            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '44px', height: '44px', borderRadius: '50%', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: '0 4px 10px rgba(0,0,0,0.03)', transition: 'all 0.3s ease', color: 'var(--text-normal)' }}
+            onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+            onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
           >
-            <div className="toggle-thumb">
-                {isDarkMode ? '🌙' : '☀️'}
-            </div>
+            {isDarkMode ? <Moon size={22} /> : <Sun size={22} />}
           </div>
         </div>
 

@@ -384,15 +384,24 @@ function App() {
             color: var(--text-normal); 
             transition: all 0.3s ease;
           }
+          
+          input[type="date"], input[type="time"], input[type="datetime-local"] {
+            color-scheme: light;
+          }
+          
+          .dark-mode input[type="date"], .dark-mode input[type="time"], .dark-mode input[type="datetime-local"] {
+            color-scheme: dark;
+          }
+
+          .dark-mode input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.8);
+          }
+
           input:focus, select:focus { 
             border-color: #0052cc !important; 
             box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.15) !important; 
             background-color: var(--bg-card) !important;
           }
-          
-          .theme-toggle-btn { transition: background-color 0.4s ease, border 0.4s ease; user-select: none; }
-          .theme-toggle-btn.light { background-color: #f1f3f5; border: 1px solid #e9ecef; }
-          .theme-toggle-btn.dark { background-color: #1a1e23; border: 1px solid #2d3545; }
           
           .file-upload-label {
             display: flex; align-items: center; justify-content: center; gap: 10px;

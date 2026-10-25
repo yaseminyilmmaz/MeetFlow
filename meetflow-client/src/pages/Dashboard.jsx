@@ -20,7 +20,7 @@ export default function Dashboard() {
     <div className="hide-item show-item">
       <div style={{ marginBottom: '40px' }}>
         <h2 style={{ color: 'var(--text-title)', margin: '0 0 10px 0', fontSize: '2.2em', fontWeight: '800', letterSpacing: '-0.5px' }}>
-          Hoş Geldin! 👋
+          Hoş Geldin! 
         </h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '1.1em', margin: 0 }}>
           Sistemde şu an tamamlanmayı bekleyen <strong style={{ color: '#ffab00' }}>{pendingTasks}</strong> aktif görev bulunuyor.
