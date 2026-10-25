@@ -36,8 +36,12 @@ function App() {
   const [editingMeetingTitle, setEditingMeetingTitle] = useState("");
   const [editingMeetingDate, setEditingMeetingDate] = useState("");
 
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [editingUserId, setEditingUserId] = useState(null);
+  const [editingUserName, setEditingUserName] = useState("");
+  const [editingUserEmail, setEditingUserEmail] = useState("");
+  const [editingUserDept, setEditingUserDept] = useState("");
 
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [audioFile, setAudioFile] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analyzedText, setAnalyzedText] = useState("");
@@ -136,6 +140,50 @@ function App() {
         setNewUserEmail("");
         setNewUserDept("");
         toast.success("Kullanıcı başarıyla sisteme eklendi!");
+      }
+    })
+    .catch(err => console.error(err));
+  };
+
+  const handleDeleteUser = (userId) => {
+    fetch(`${API_BASE_URL}/api/users/${userId}`, { method: 'DELETE' })
+    .then(res => {
+      if(res.ok) {
+        fetchUsers();
+        toast.error("Kullanıcı sistemden silindi.");
+      }
+    })
+    .catch(err => console.error(err));
+  };
+
+  const handleStartEditUser = (user) => {
+    setEditingUserId(user.id);
+    setEditingUserName(user.fullName);
+    setEditingUserEmail(user.email);
+    setEditingUserDept(user.department);
+  };
+
+  const handleSaveEditUser = (userId) => {
+    if (!editingUserName.trim() || !editingUserEmail.trim()) {
+      toast.error("Ad Soyad ve E-posta alanları zorunludur.");
+      return;
+    }
+    const updatedUser = {
+      id: userId,
+      fullName: editingUserName,
+      email: editingUserEmail,
+      department: editingUserDept
+    };
+    fetch(`${API_BASE_URL}/api/users/${userId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedUser)
+    })
+    .then(res => {
+      if(res.ok) {
+        fetchUsers();
+        setEditingUserId(null);
+        toast.success("Kullanıcı başarıyla güncellendi!");
       }
     })
     .catch(err => console.error(err));
@@ -380,6 +428,9 @@ function App() {
     editingTaskUserId, setEditingTaskUserId, editingTaskPriority, setEditingTaskPriority,
     editingMeetingId, setEditingMeetingId, editingMeetingTitle, setEditingMeetingTitle,
     editingMeetingDate, setEditingMeetingDate, handleStartEditMeeting, handleSaveEditMeeting,
+    editingUserId, setEditingUserId, editingUserName, setEditingUserName,
+    editingUserEmail, setEditingUserEmail, editingUserDept, setEditingUserDept,
+    handleStartEditUser, handleSaveEditUser, handleDeleteUser,
     isDarkMode, setIsDarkMode, audioFile, setAudioFile, isAnalyzing, setIsAnalyzing,
     analyzedText, setAnalyzedText, fetchMeetings, fetchUsers, getCountdown, parseTaskPriority,
     getPriorityStyles, handleSubmit, handleUserSubmit, handleAudioUpload, executeDeleteMeeting,
