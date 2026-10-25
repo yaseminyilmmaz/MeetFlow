@@ -22,7 +22,7 @@ export default function Sidebar({ isOpen, setIsSidebarOpen }) {
 
   return (
     <aside style={{ 
-      width: isOpen ? '280px' : '88px', 
+      width: isOpen ? '310px' : '88px', 
       backgroundColor: 'var(--bg-card)', 
       borderRight: '1px solid var(--border-light)', 
       display: 'flex', 
