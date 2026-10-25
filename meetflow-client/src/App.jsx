@@ -32,6 +32,10 @@ function App() {
   const [editingTaskUserId, setEditingTaskUserId] = useState("");
   const [editingTaskPriority, setEditingTaskPriority] = useState("Orta");
 
+  const [editingMeetingId, setEditingMeetingId] = useState(null);
+  const [editingMeetingTitle, setEditingMeetingTitle] = useState("");
+  const [editingMeetingDate, setEditingMeetingDate] = useState("");
+
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   const [audioFile, setAudioFile] = useState(null);
@@ -223,6 +227,49 @@ function App() {
     );
   };
 
+  const handleStartEditMeeting = (meeting) => {
+    setEditingMeetingId(meeting.id);
+    setEditingMeetingTitle(meeting.title || meeting.Title);
+    
+    let formattedDate = "";
+    if (meeting.date) {
+      const d = new Date(meeting.date);
+      const tzOffset = d.getTimezoneOffset() * 60000;
+      const localISOTime = (new Date(d.getTime() - tzOffset)).toISOString().slice(0, 16);
+      formattedDate = localISOTime;
+    }
+    setEditingMeetingDate(formattedDate);
+  };
+
+  const handleSaveEditMeeting = (meetingId) => {
+    if (!editingMeetingTitle.trim() || !editingMeetingDate) {
+      toast.error("Başlık ve tarih boş bırakılamaz.");
+      return;
+    }
+
+    const updatedMeeting = {
+      id: meetingId,
+      title: editingMeetingTitle.trim(),
+      date: editingMeetingDate
+    };
+
+    fetch(`${API_BASE_URL}/api/meetings/${meetingId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedMeeting)
+    })
+    .then(res => {
+      if(res.ok) {
+        fetchMeetings();
+        setEditingMeetingId(null);
+        setEditingMeetingTitle("");
+        setEditingMeetingDate("");
+        toast.success("Toplantı bilgileri güncellendi!");
+      }
+    })
+    .catch(err => console.error(err));
+  };
+
   const handleAddTask = (meetingId) => {
     const taskTitle = taskInputs[meetingId];
     if (!taskTitle) return; 
@@ -333,6 +380,8 @@ function App() {
     newUserDept, setNewUserDept, filterUserId, setFilterUserId, searchTerm, setSearchTerm,
     editingTaskId, setEditingTaskId, editingTaskTitle, setEditingTaskTitle,
     editingTaskUserId, setEditingTaskUserId, editingTaskPriority, setEditingTaskPriority,
+    editingMeetingId, setEditingMeetingId, editingMeetingTitle, setEditingMeetingTitle,
+    editingMeetingDate, setEditingMeetingDate, handleStartEditMeeting, handleSaveEditMeeting,
     isDarkMode, setIsDarkMode, audioFile, setAudioFile, isAnalyzing, setIsAnalyzing,
     analyzedText, setAnalyzedText, fetchMeetings, fetchUsers, getCountdown, parseTaskPriority,
     getPriorityStyles, handleSubmit, handleUserSubmit, handleAudioUpload, executeDeleteMeeting,
