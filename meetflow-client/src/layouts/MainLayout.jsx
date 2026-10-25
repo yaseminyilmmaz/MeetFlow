@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
-import { Sun, Moon, Menu } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 
 export default function MainLayout(props) {
   const { isDarkMode, setIsDarkMode } = props;
@@ -10,22 +10,13 @@ export default function MainLayout(props) {
   return (
     <div className={isDarkMode ? 'dark-mode' : ''} style={{ display: 'flex', height: '100vh', backgroundColor: 'var(--bg-body)', color: 'var(--text-normal)', overflow: 'hidden' }}>
       
-      <Sidebar isOpen={isSidebarOpen} />
+      <Sidebar isOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
       
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', width: '100%', transition: 'all 0.3s ease' }}>
         
-        <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 30px', backgroundColor: 'var(--bg-card)', borderBottom: '1px solid var(--border-light)', position: 'sticky', top: 0, zIndex: 20 }}>
+        <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '15px 30px', backgroundColor: 'var(--bg-card)', borderBottom: '1px solid var(--border-light)', position: 'sticky', top: 0, zIndex: 20 }}>
           
-          <button 
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            style={{ background: 'transparent', border: 'none', color: 'var(--text-title)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '8px', transition: '0.2s' }}
-            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-hover)'}
-            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-          >
-            <Menu size={24} />
-          </button>
-
-          <div style={{ display: 'flex', alignItems: 'center', position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
             <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'linear-gradient(135deg, #0052cc, #36b37e)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '10px', color: 'white', fontWeight: 'bold', fontSize: '1.2em', boxShadow: '0 4px 10px rgba(54, 179, 126, 0.3)' }}>
               M
             </div>
@@ -46,7 +37,7 @@ export default function MainLayout(props) {
 
           <div 
             onClick={() => setIsDarkMode(!isDarkMode)}
-            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'var(--bg-body)', border: '1px solid var(--border-light)', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', transition: 'all 0.3s ease', color: 'var(--text-normal)' }}
+            style={{ cursor: 'pointer', position: 'absolute', right: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'var(--bg-body)', border: '1px solid var(--border-light)', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', transition: 'all 0.3s ease', color: 'var(--text-normal)' }}
             onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
             onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
           >
