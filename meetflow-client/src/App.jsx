@@ -423,7 +423,7 @@ function App() {
       const meetingTasks = meeting.tasks || meeting.Tasks || [];
       matchesUser = meetingTasks.some(task => {
         const assignedId = task.assignedUserId || task.AssignedUserId;
-        return assignedId !== null && assignedId.toString() === filterUserId.toString();
+        return assignedId != null && String(assignedId) === String(filterUserId);
       });
     }
 
