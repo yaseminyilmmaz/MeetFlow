@@ -416,7 +416,18 @@ function App() {
 
   const filteredMeetings = meetings.filter(meeting => {
     const titleText = meeting.title || meeting.Title;
-    return titleText && titleText.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = titleText && titleText.toLowerCase().includes(searchTerm.toLowerCase());
+
+    let matchesUser = true;
+    if (filterUserId !== "") {
+      const meetingTasks = meeting.tasks || meeting.Tasks || [];
+      matchesUser = meetingTasks.some(task => {
+        const assignedId = task.assignedUserId || task.AssignedUserId;
+        return assignedId !== null && assignedId.toString() === filterUserId.toString();
+      });
+    }
+
+    return matchesSearch && matchesUser;
   });
 
   const contextData = {
